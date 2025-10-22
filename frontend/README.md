@@ -1,46 +1,134 @@
-# Getting Started with Create React App
+# FinFusion Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React + TypeScript frontend for FinFusion financial tracking application.
+
+## Features
+
+- 🔐 **Authentication**: Login/Register with Google OAuth support
+- 💳 **Transactions**: Full CRUD operations with filtering and search
+- 💰 **Budgets**: Advanced budget tracking with alerts and recommendations
+- 📊 **Dashboard**: Interactive charts and financial insights
+- 📁 **Categories**: Hierarchical category management
+- 📈 **Analytics**: Spending trends and category breakdowns
+- 🎨 **Modern UI**: Responsive design with beautiful gradients and animations
+
+## Tech Stack
+
+- **React 18** with TypeScript
+- **Redux Toolkit** for state management
+- **React Router DOM** for routing
+- **Recharts** for data visualization
+- **Axios** for API calls
+- **CSS** for styling
+
+## Setup
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Create `.env` file:
+```bash
+cp .env.example .env
+```
+
+3. Update environment variables in `.env`:
+```
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_GOOGLE_CLIENT_ID=your-google-client-id
+```
+
+4. Start development server:
+```bash
+npm start
+```
+
+The app will open at [http://localhost:3000](http://localhost:3000)
 
 ## Available Scripts
 
-In the project directory, you can run:
+- `npm start` - Run development server
+- `npm build` - Build for production
+- `npm test` - Run tests
+- `npm run eject` - Eject from Create React App
 
-### `npm start`
+## Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+src/
+├── components/          # Reusable UI components
+│   ├── Layout.tsx       # Main layout with sidebar
+│   └── PrivateRoute.tsx # Protected route wrapper
+├── pages/               # Page components
+│   ├── Login.tsx
+│   ├── Register.tsx
+│   ├── Dashboard.tsx
+│   ├── Transactions.tsx
+│   ├── Categories.tsx
+│   ├── Budgets.tsx
+│   ├── Analytics.tsx
+│   └── Profile.tsx
+├── services/            # API service modules
+│   ├── api.ts          # Axios instance
+│   ├── authService.ts
+│   ├── transactionService.ts
+│   ├── categoryService.ts
+│   ├── budgetService.ts
+│   └── analyticsService.ts
+├── store/              # Redux store
+│   ├── index.ts        # Store configuration
+│   └── slices/         # Redux slices
+├── hooks/              # Custom React hooks
+│   ├── useAuth.ts
+│   ├── useTransactions.ts
+│   ├── useCategories.ts
+│   ├── useBudgets.ts
+│   └── useAnalytics.ts
+├── utils/              # Utility functions
+│   ├── formatters.ts
+│   ├── validation.ts
+│   ├── dateHelpers.ts
+│   ├── chartHelpers.ts
+│   └── exportHelpers.ts
+├── types/              # TypeScript types
+│   └── index.ts
+└── App.tsx            # Main app component
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Features Implementation Status
 
-### `npm test`
+### ✅ Completed
+- Authentication flow (Login/Register)
+- Protected routes
+- Redux store setup
+- API services
+- Custom hooks
+- Utility functions
+- Dashboard with charts
+- Transactions page (full CRUD)
+- Responsive layout
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 🚧 In Progress
+- Categories management UI
+- Budgets management UI
+- Analytics page UI
+- Google OAuth integration
 
-### `npm run build`
+### 📋 Planned
+- Transaction import/export
+- Budget recommendations
+- Advanced analytics
+- Notifications
+- Dark mode
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Contributing
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Create feature branch
+2. Make changes
+3. Test thoroughly
+4. Submit PR
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## License
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+MIT
