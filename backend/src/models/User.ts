@@ -5,33 +5,45 @@ const prisma = new PrismaClient();
 export interface User {
   id: string;
   email: string;
-  googleId: string;
+  googleId?: string | null;
+  password?: string | null;
   name: string;
-  profilePicture?: string;
+  profilePicture?: string | null;
+  role: 'ADMIN' | 'MANAGER' | 'USER';
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CreateUserData {
-  googleId: string;
+  googleId?: string;
   email: string;
   name: string;
+  password?: string;
   profilePicture?: string;
+  role?: 'ADMIN' | 'MANAGER' | 'USER';
+  isActive?: boolean;
 }
 
 export interface UpdateUserData {
   name?: string;
   profilePicture?: string;
+  password?: string;
+  role?: 'ADMIN' | 'MANAGER' | 'USER';
+  isActive?: boolean;
 }
 
 export class UserModel {
   static async create(data: CreateUserData): Promise<User> {
     return await prisma.user.create({
       data: {
-        googleId: data.googleId,
+        googleId: data.googleId ?? null,
         email: data.email,
         name: data.name,
-        profilePicture: data.profilePicture
+        password: data.password,
+        profilePicture: data.profilePicture,
+        role: data.role || 'USER',
+        isActive: data.isActive ?? true
       }
     });
   }
@@ -73,5 +85,9 @@ export class UserModel {
       skip: offset,
       orderBy: { createdAt: 'desc' }
     });
+  }
+
+  static async count(): Promise<number> {
+    return await prisma.user.count();
   }
 }

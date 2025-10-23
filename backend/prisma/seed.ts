@@ -1,5 +1,6 @@
 /// <reference types="node" />
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, CategoryType } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -7,35 +8,35 @@ const defaultCategories = [
   // Income Categories
   {
     name: 'Salary',
-    type: 'INCOME',
+    type: CategoryType.INCOME,
     icon: '💼',
     color: '#4CAF50',
     isSystem: true
   },
   {
     name: 'Freelance',
-    type: 'INCOME',
+    type: CategoryType.INCOME,
     icon: '💻',
     color: '#2196F3',
     isSystem: true
   },
   {
     name: 'Investment',
-    type: 'INCOME',
+    type: CategoryType.INCOME,
     icon: '📈',
     color: '#FF9800',
     isSystem: true
   },
   {
     name: 'Business',
-    type: 'INCOME',
+    type: CategoryType.INCOME,
     icon: '🏢',
     color: '#9C27B0',
     isSystem: true
   },
   {
     name: 'Other Income',
-    type: 'INCOME',
+    type: CategoryType.INCOME,
     icon: '💰',
     color: '#607D8B',
     isSystem: true
@@ -44,112 +45,112 @@ const defaultCategories = [
   // Expense Categories
   {
     name: 'Food & Dining',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🍽️',
     color: '#F44336',
     isSystem: true
   },
   {
     name: 'Transportation',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🚗',
     color: '#3F51B5',
     isSystem: true
   },
   {
     name: 'Shopping',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🛍️',
     color: '#E91E63',
     isSystem: true
   },
   {
     name: 'Entertainment',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🎬',
     color: '#FF5722',
     isSystem: true
   },
   {
     name: 'Bills & Utilities',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '⚡',
     color: '#FFC107',
     isSystem: true
   },
   {
     name: 'Healthcare',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🏥',
     color: '#4CAF50',
     isSystem: true
   },
   {
     name: 'Education',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '📚',
     color: '#2196F3',
     isSystem: true
   },
   {
     name: 'Travel',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '✈️',
     color: '#00BCD4',
     isSystem: true
   },
   {
     name: 'Personal Care',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '💄',
     color: '#E91E63',
     isSystem: true
   },
   {
     name: 'Home & Garden',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🏠',
     color: '#8BC34A',
     isSystem: true
   },
   {
     name: 'Technology',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '💻',
     color: '#607D8B',
     isSystem: true
   },
   {
     name: 'Sports & Fitness',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🏃',
     color: '#FF9800',
     isSystem: true
   },
   {
     name: 'Gifts & Donations',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🎁',
     color: '#9C27B0',
     isSystem: true
   },
   {
     name: 'Insurance',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '🛡️',
     color: '#795548',
     isSystem: true
   },
   {
     name: 'Taxes',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '📋',
     color: '#FF5722',
     isSystem: true
   },
   {
     name: 'Other Expenses',
-    type: 'EXPENSE',
+    type: CategoryType.EXPENSE,
     icon: '📝',
     color: '#9E9E9E',
     isSystem: true
@@ -158,6 +159,26 @@ const defaultCategories = [
 
 async function main() {
   console.log('🌱 Starting database seed...');
+
+  // Create default admin user
+  console.log('👤 Creating default admin user...');
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  
+  await prisma.user.upsert({
+    where: { email: 'admin@finfusion.com' },
+    update: {},
+    create: {
+      email: 'admin@finfusion.com',
+      name: 'System Administrator',
+      password: hashedPassword,
+      role: 'ADMIN',
+      isActive: true,
+    },
+  });
+
+  console.log(`🔑 Admin user created with email: admin@finfusion.com`);
+  console.log(`🔑 Admin password: ${adminPassword}`);
 
   // Create default categories
   console.log('📂 Creating default categories...');
@@ -195,7 +216,7 @@ async function main() {
         where: {
           name_type: {
             name: subcategoryData.name,
-            type: 'EXPENSE'
+            type: CategoryType.EXPENSE
           }
         },
         update: {
@@ -205,7 +226,7 @@ async function main() {
         },
         create: {
           ...subcategoryData,
-          type: 'EXPENSE',
+          type: CategoryType.EXPENSE,
           parentCategoryId: foodCategory.id,
           isSystem: true
         }
@@ -234,7 +255,7 @@ async function main() {
         where: {
           name_type: {
             name: subcategoryData.name,
-            type: 'EXPENSE'
+            type: CategoryType.EXPENSE
           }
         },
         update: {
@@ -244,7 +265,7 @@ async function main() {
         },
         create: {
           ...subcategoryData,
-          type: 'EXPENSE',
+          type: CategoryType.EXPENSE,
           parentCategoryId: transportCategory.id,
           isSystem: true
         }

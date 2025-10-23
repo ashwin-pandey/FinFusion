@@ -226,9 +226,15 @@ export class BudgetService {
   static async checkBudgetAlerts(userId: string): Promise<void> {
     const { budgets } = await BudgetModel.getBudgetsWithSpending({ userId }, 1, 1000);
 
+    console.log(`Checking budget alerts for user ${userId}, found ${budgets.length} budgets`);
+
     for (const budget of budgets) {
+      console.log(`Budget ${budget.id}: ${budget.utilizationPercentage}% utilized, threshold: ${budget.alertThreshold}%`);
+      
       // Check if budget has exceeded alert threshold
       if (budget.utilizationPercentage >= budget.alertThreshold) {
+        console.log(`Budget ${budget.id} exceeded threshold! Creating alert...`);
+        
         // Check if alert already exists for this threshold
         const existingAlerts = await BudgetModel.getAlerts(budget.id);
         const hasAlert = existingAlerts.some(
@@ -238,7 +244,11 @@ export class BudgetService {
         );
 
         if (!hasAlert) {
+          console.log(`Creating new alert for budget ${budget.id} at ${budget.alertThreshold}%`);
           await BudgetModel.createAlert(budget.id, budget.alertThreshold);
+          console.log(`Alert created successfully for budget ${budget.id}`);
+        } else {
+          console.log(`Alert already exists for budget ${budget.id} at ${budget.alertThreshold}%`);
         }
       }
     }

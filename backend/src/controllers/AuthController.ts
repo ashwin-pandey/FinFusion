@@ -1,7 +1,118 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
 import { AuthService } from '../services/AuthService';
+import { logger } from '../utils/logger';
 
 export class AuthController {
+  static async register(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password, name } = req.body;
+
+      // Validate input
+      if (!email || !password || !name) {
+        res.status(400).json({
+          success: false,
+          error: 'Email, password, and name are required'
+        });
+        return;
+      }
+
+      // Check if user already exists
+      const existingUser = await AuthService.getUserByEmail(email);
+      if (existingUser) {
+        res.status(400).json({
+          success: false,
+          error: 'User with this email already exists'
+        });
+        return;
+      }
+
+      // Create user
+      const user = await AuthService.createUser(email, password, name);
+      const { accessToken, refreshToken } = AuthService.generateTokens(user.id);
+
+      logger.auth('User registered successfully', user.id, { email, name });
+      logger.info('User registration completed', { userId: user.id, email });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            profilePicture: user.profilePicture,
+            createdAt: user.createdAt
+          },
+          tokens: {
+            accessToken,
+            refreshToken
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Registration error', error, { email, name });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to register user'
+      });
+    }
+  }
+
+  static async login(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+
+      // Validate input
+      if (!email || !password) {
+        res.status(400).json({
+          success: false,
+          error: 'Email and password are required'
+        });
+        return;
+      }
+
+      // Verify credentials
+      const user = await AuthService.verifyPassword(email, password);
+      if (!user) {
+        res.status(401).json({
+          success: false,
+          error: 'Invalid email or password'
+        });
+        return;
+      }
+
+      // Generate tokens
+      const { accessToken, refreshToken } = AuthService.generateTokens(user.id);
+
+      logger.auth('User logged in successfully', user.id, { email });
+      logger.info('User login completed', { userId: user.id, email });
+
+      res.json({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            profilePicture: user.profilePicture,
+            createdAt: user.createdAt
+          },
+          tokens: {
+            accessToken,
+            refreshToken
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Login error', error, { email });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to login'
+      });
+    }
+  }
+
   static async googleCallback(req: Request, res: Response): Promise<void> {
     try {
       const user = req.user as any;
@@ -15,9 +126,12 @@ export class AuthController {
 
       const { accessToken, refreshToken } = AuthService.generateTokens(user.id);
 
+      logger.auth('Google OAuth login successful', user.id, { email: user.email });
+      logger.info('Google OAuth login completed', { userId: user.id, email: user.email });
+
       res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${accessToken}&refresh=${refreshToken}`);
     } catch (error) {
-      console.error('Google callback error:', error);
+      logger.error('Google callback error', error);
       res.status(500).json({
         success: false,
         error: 'Authentication failed'
@@ -55,9 +169,11 @@ export class AuthController {
         return;
       }
 
+      logger.info('User profile retrieved', { userId: user.id, email: user.email });
+
       res.json({
         success: true,
-        user: {
+        data: {
           id: user.id,
           email: user.email,
           name: user.name,
@@ -66,7 +182,7 @@ export class AuthController {
         }
       });
     } catch (error) {
-      console.error('Get current user error:', error);
+      logger.error('Get current user error', error);
       res.status(500).json({
         success: false,
         error: 'Failed to get user information'
@@ -96,12 +212,14 @@ export class AuthController {
         return;
       }
 
+      logger.info('Token refreshed successfully', { refreshToken: refreshToken.substring(0, 10) + '...' });
+
       res.json({
         success: true,
         accessToken: newAccessToken
       });
     } catch (error) {
-      console.error('Refresh token error:', error);
+      logger.error('Refresh token error', error);
       res.status(500).json({
         success: false,
         error: 'Failed to refresh token'
@@ -113,15 +231,71 @@ export class AuthController {
     try {
       // In a real implementation, you might want to blacklist the token
       // For now, we'll just return success
+      logger.auth('User logged out successfully');
+      logger.info('User logout completed');
+
       res.json({
         success: true,
         message: 'Logged out successfully'
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error', error);
       res.status(500).json({
         success: false,
         error: 'Failed to logout'
+      });
+    }
+  }
+
+  static async updateProfile(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { name, email } = req.body;
+      const userId = req.user!.id;
+
+      const user = await AuthService.updateProfile(userId, { name, email });
+
+      logger.auth('User profile updated', userId, { name, email });
+      logger.info('Profile update completed', { userId, name, email });
+
+      res.json({
+        success: true,
+        data: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          profilePicture: user.profilePicture,
+          createdAt: user.createdAt
+        }
+      });
+    } catch (error) {
+      logger.error('Update profile error', error, { userId: req.user?.id });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update profile'
+      });
+    }
+  }
+
+  static async changePassword(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user!.id;
+
+      await AuthService.changePassword(userId, currentPassword, newPassword);
+
+      logger.auth('User password changed', userId);
+      logger.security('Password change completed', { userId });
+
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } catch (error: any) {
+      logger.error('Change password error', error, { userId: req.user?.id });
+      logger.security('Password change failed', { userId: req.user?.id, error: error.message });
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to change password'
       });
     }
   }

@@ -63,6 +63,8 @@ export interface TransactionSummary {
   totalExpenses: number;
   netIncome: number;
   transactionCount: number;
+  incomeCount: number;
+  expenseCount: number;
 }
 
 export class TransactionModel {
@@ -205,7 +207,7 @@ export class TransactionModel {
       if (filters.endDate) where.date.lte = filters.endDate;
     }
 
-    const [incomeData, expenseData, totalCount] = await Promise.all([
+    const [incomeData, expenseData, incomeCount, expenseCount] = await Promise.all([
       prisma.transaction.aggregate({
         where: { ...where, type: 'INCOME' },
         _sum: { amount: true }
@@ -214,7 +216,8 @@ export class TransactionModel {
         where: { ...where, type: 'EXPENSE' },
         _sum: { amount: true }
       }),
-      prisma.transaction.count({ where })
+      prisma.transaction.count({ where: { ...where, type: 'INCOME' } }),
+      prisma.transaction.count({ where: { ...where, type: 'EXPENSE' } })
     ]);
 
     const totalIncome = Number(incomeData._sum.amount || 0);
@@ -224,7 +227,9 @@ export class TransactionModel {
       totalIncome,
       totalExpenses,
       netIncome: totalIncome - totalExpenses,
-      transactionCount: totalCount
+      transactionCount: incomeCount + expenseCount,
+      incomeCount,
+      expenseCount
     };
   }
 

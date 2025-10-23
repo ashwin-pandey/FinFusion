@@ -96,8 +96,8 @@ export class AnalyticsService {
         totalExpenses: transactionAnalytics.summary.totalExpenses,
         netIncome: transactionAnalytics.summary.netIncome,
         transactionCounts: {
-          income: transactionAnalytics.summary.transactionCount,
-          expenses: transactionAnalytics.summary.transactionCount
+          income: transactionAnalytics.summary.incomeCount,
+          expenses: transactionAnalytics.summary.expenseCount
         }
       },
       budgetUtilization
@@ -166,7 +166,7 @@ export class AnalyticsService {
     );
 
     const validCategoryDetails = categoryDetails.filter(Boolean) as any[];
-    const totalAmount = validCategoryDetails.reduce((sum, item) => sum + item.amount, 0);
+    const totalAmount = validCategoryDetails.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     // Calculate percentages
     const breakdown = validCategoryDetails.map(item => ({
@@ -222,9 +222,9 @@ export class AnalyticsService {
 
     // Calculate monthly averages
     const monthlyAverage = {
-      income: Number((transactionAnalytics.summary.totalIncome / 3).toFixed(2)),
-      expenses: Number((transactionAnalytics.summary.totalExpenses / 3).toFixed(2)),
-      netIncome: Number(((transactionAnalytics.summary.totalIncome - transactionAnalytics.summary.totalExpenses) / 3).toFixed(2))
+      income: Number(((transactionAnalytics.summary.totalIncome || 0) / 3).toFixed(2)),
+      expenses: Number(((transactionAnalytics.summary.totalExpenses || 0) / 3).toFixed(2)),
+      netIncome: Number((((transactionAnalytics.summary.totalIncome || 0) - (transactionAnalytics.summary.totalExpenses || 0)) / 3).toFixed(2))
     };
 
     // Get top spending categories

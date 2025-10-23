@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TransactionService } from '../services/TransactionService';
+import { BudgetService } from '../services/BudgetService';
 import { AuthRequest } from '../middleware/auth';
 
 export class TransactionController {
@@ -94,6 +95,14 @@ export class TransactionController {
 
       const transaction = await TransactionService.createTransaction(transactionData);
 
+      // Check budget alerts after creating transaction
+      try {
+        await BudgetService.checkBudgetAlerts(req.user!.id);
+      } catch (alertError) {
+        console.error('Budget alert check failed:', alertError);
+        // Don't fail the transaction creation if alert checking fails
+      }
+
       res.status(201).json({
         success: true,
         data: transaction
@@ -122,6 +131,14 @@ export class TransactionController {
       if (updateData.date) updateData.date = new Date(updateData.date);
 
       const transaction = await TransactionService.updateTransaction(id, req.user!.id, updateData);
+
+      // Check budget alerts after updating transaction
+      try {
+        await BudgetService.checkBudgetAlerts(req.user!.id);
+      } catch (alertError) {
+        console.error('Budget alert check failed:', alertError);
+        // Don't fail the transaction update if alert checking fails
+      }
 
       res.json({
         success: true,

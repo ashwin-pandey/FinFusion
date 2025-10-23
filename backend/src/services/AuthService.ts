@@ -1,4 +1,5 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { UserModel, CreateUserData } from '../models/User';
 
 export interface AuthTokens {
@@ -14,6 +15,31 @@ export interface GoogleProfile {
 }
 
 export class AuthService {
+  static async createUser(email: string, password: string, name: string) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const userData: CreateUserData = {
+      email,
+      password: hashedPassword,
+      name
+    };
+
+    return await UserModel.create(userData);
+  }
+
+  static async getUserByEmail(email: string) {
+    return await UserModel.findByEmail(email);
+  }
+
+  static async verifyPassword(email: string, password: string) {
+    const user = await UserModel.findByEmail(email);
+    if (!user || !user.password) {
+      return null;
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    return isValid ? user : null;
+  }
   static generateTokens(userId: string): AuthTokens {
     const jwtSecret = process.env.JWT_SECRET!;
     
@@ -88,5 +114,28 @@ export class AuthService {
     } catch (error) {
       return null;
     }
+  }
+
+  static async updateProfile(userId: string, data: { name: string; email: string }) {
+    return await UserModel.update(userId, data);
+  }
+
+  static async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await UserModel.findById(userId);
+    if (!user || !user.password) {
+      throw new Error('User not found or no password set');
+    }
+
+    // Verify current password
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    await UserModel.update(userId, { password: hashedPassword });
   }
 }

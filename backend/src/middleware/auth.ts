@@ -9,6 +9,7 @@ export interface AuthRequest extends Omit<Request, 'user'> {
     id: string;
     email: string;
     name: string;
+    role: 'ADMIN' | 'MANAGER' | 'USER';
   };
 }
 
@@ -33,7 +34,7 @@ export const authenticate = async (
     // Verify user still exists
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, name: true }
+      select: { id: true, email: true, name: true, role: true }
     });
 
     if (!user) {

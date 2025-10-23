@@ -175,9 +175,9 @@ export class TransactionService {
     return Object.entries(monthlyData)
       .map(([period, data]) => ({
         period,
-        income: Number(data.income.toFixed(2)),
-        expenses: Number(data.expenses.toFixed(2)),
-        netIncome: Number((data.income - data.expenses).toFixed(2))
+        income: Number(Number(data.income || 0).toFixed(2)),
+        expenses: Number(Number(data.expenses || 0).toFixed(2)),
+        netIncome: Number((Number(data.income || 0) - Number(data.expenses || 0)).toFixed(2))
       }))
       .sort((a, b) => a.period.localeCompare(b.period));
   }

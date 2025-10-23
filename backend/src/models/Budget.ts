@@ -217,10 +217,21 @@ export class BudgetModel {
 
     if (!budget) return 0;
 
+    // Get all sub-categories of the budget category
+    const subCategories = await prisma.category.findMany({
+      where: {
+        parentCategoryId: budget.categoryId
+      },
+      select: { id: true }
+    });
+
+    // Create array of category IDs (main category + all sub-categories)
+    const categoryIds = [budget.categoryId, ...subCategories.map(cat => cat.id)];
+
     const spending = await prisma.transaction.aggregate({
       where: {
         userId,
-        categoryId: budget.categoryId,
+        categoryId: { in: categoryIds },
         type: 'EXPENSE',
         date: {
           gte: budget.startDate,
