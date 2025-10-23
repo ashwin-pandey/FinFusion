@@ -1,4 +1,5 @@
 import { AccountModel, CreateAccountData, UpdateAccountData, AccountFilters } from '../models/Account';
+import { UserModel } from '../models/User';
 
 export interface AccountListResult {
   accounts: any[];
@@ -13,7 +14,7 @@ export interface AccountListResult {
 export class AccountService {
   static async createAccount(data: CreateAccountData): Promise<any> {
     // Verify user exists
-    const user = await AccountModel.findById(data.userId, data.userId);
+    const user = await UserModel.findById(data.userId);
     if (!user) {
       throw new Error('User not found');
     }
