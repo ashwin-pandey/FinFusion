@@ -5,6 +5,9 @@ import { formatPercentage, formatDate } from '../utils/formatters';
 import { getDateRangeForPeriod, toISODateString } from '../utils/dateHelpers';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getTransactionTypeColor, generateColorPalette } from '../utils/chartHelpers';
+import { Text } from '@fluentui/react-components';
+import StatCard from '../components/Cards/StatCard';
+import ClickableNumber from '../components/ClickableNumber';
 import './Analytics.css';
 
 const Analytics: React.FC = () => {
@@ -104,72 +107,61 @@ const Analytics: React.FC = () => {
     <div className="analytics-page">
       <div className="page-header">
         <h1>Analytics & Insights</h1>
-        <div className="analytics-controls">
-          <select value={period} onChange={(e) => setPeriod(e.target.value as any)}>
+        <div>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as 'this_month' | 'last_month' | 'last_90_days' | 'this_year' | 'all_time')}
+            className="fluent-select"
+          >
             <option value="this_month">This Month</option>
             <option value="last_month">Last Month</option>
             <option value="last_90_days">Last 90 Days</option>
             <option value="this_year">This Year</option>
             <option value="all_time">All Time</option>
           </select>
-          <select value={trendGroupBy} onChange={(e) => setTrendGroupBy(e.target.value as any)}>
-            <option value="day">By Day</option>
-            <option value="week">By Week</option>
-            <option value="month">By Month</option>
-          </select>
         </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-icon">📊</div>
-          <div className="metric-content">
-            <p className="metric-label">Total Transactions</p>
-            <h2 className="metric-value">{totalTransactions}</h2>
-            <p className="metric-subtitle">
-              {summary?.transactionCounts.income || 0} income • {summary?.transactionCounts.expenses || 0} expenses
-            </p>
-          </div>
-        </div>
+      <div className="summary-grid">
+        <StatCard
+          icon="📊"
+          iconColor="#e3f2fd"
+          value={<ClickableNumber value={totalTransactions} showCurrency={false} />}
+          label="Total Transactions"
+        />
 
-        <div className="metric-card">
-          <div className="metric-icon">💵</div>
-          <div className="metric-content">
-            <p className="metric-label">Avg. Income</p>
-            <h2 className="metric-value">{formatCurrency(avgIncome)}</h2>
-            <p className="metric-subtitle">Per transaction</p>
-          </div>
-        </div>
+        <StatCard
+          icon="💵"
+          iconColor="#e8f5e9"
+          value={<ClickableNumber value={avgIncome} />}
+          label="Avg. Income"
+        />
 
-        <div className="metric-card">
-          <div className="metric-icon">💸</div>
-          <div className="metric-content">
-            <p className="metric-label">Avg. Expense</p>
-            <h2 className="metric-value">{formatCurrency(avgExpense)}</h2>
-            <p className="metric-subtitle">Per transaction</p>
-          </div>
-        </div>
+        <StatCard
+          icon="💸"
+          iconColor="#ffebee"
+          value={<ClickableNumber value={avgExpense} />}
+          label="Avg. Expense"
+        />
 
-        <div className="metric-card">
-          <div className="metric-icon">📈</div>
-          <div className="metric-content">
-            <p className="metric-label">Savings Rate</p>
-            <h2 className="metric-value">
-              {summary && summary.totalIncome > 0
-                ? formatPercentage((summary.netIncome / summary.totalIncome) * 100)
-                : '0%'}
-            </h2>
-            <p className="metric-subtitle">Of total income</p>
-          </div>
-        </div>
+        <StatCard
+          icon="📈"
+          iconColor="#f3e5f5"
+          value={
+            summary && summary.totalIncome > 0
+              ? formatPercentage((summary.netIncome / summary.totalIncome) * 100)
+              : '0%'
+          }
+          label="Savings Rate"
+        />
       </div>
 
       {/* Charts Grid */}
-      <div className="charts-container">
+      <div className="charts-grid">
         {/* Income vs Expenses Trend */}
         {combinedData.length > 0 && (
-          <div className="chart-card chart-full">
+          <div className="chart-card full-width">
             <h3>Income vs Expenses Trend</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={combinedData}>
@@ -188,7 +180,7 @@ const Analytics: React.FC = () => {
 
         {/* Cashflow Area Chart */}
         {combinedData.length > 0 && (
-          <div className="chart-card chart-full">
+          <div className="chart-card full-width">
             <h3>Cash Flow</h3>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={combinedData}>

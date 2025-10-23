@@ -1,5 +1,6 @@
 import { TransactionModel, CreateTransactionData, UpdateTransactionData, TransactionFilters, TransactionSummary } from '../models/Transaction';
 import { CategoryModel } from '../models/Category';
+import { AccountModel } from '../models/Account';
 
 export interface TransactionListResult {
   transactions: any[];
@@ -40,7 +41,28 @@ export class TransactionService {
       throw new Error('Access denied to category');
     }
 
-    return await TransactionModel.create(data);
+    // Verify account exists and user has access (if accountId is provided)
+    if (data.accountId) {
+      const account = await AccountModel.findById(data.accountId, data.userId);
+      if (!account) {
+        throw new Error('Account not found');
+      }
+      
+      // Check if user has sufficient balance for expense transactions
+      if (data.type === 'EXPENSE' && account.balance < data.amount) {
+        throw new Error(`Insufficient funds. Account balance: ${account.balance}, Required: ${data.amount}`);
+      }
+    }
+
+    const transaction = await TransactionModel.create(data);
+
+    // Update account balance if account is specified
+    if (data.accountId) {
+      const amountChange = data.type === 'INCOME' ? data.amount : -data.amount;
+      await AccountModel.updateBalance(data.accountId, amountChange);
+    }
+
+    return transaction;
   }
 
   static async getTransactions(
@@ -109,6 +131,12 @@ export class TransactionService {
     const transaction = await TransactionModel.findById(id, userId);
     if (!transaction) {
       throw new Error('Transaction not found');
+    }
+
+    // Reverse the account balance change before deleting
+    if (transaction.accountId) {
+      const amountChange = transaction.type === 'INCOME' ? -transaction.amount : transaction.amount;
+      await AccountModel.updateBalance(transaction.accountId, amountChange);
     }
 
     await TransactionModel.delete(id, userId);

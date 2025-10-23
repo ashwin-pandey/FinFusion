@@ -2,9 +2,302 @@ import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import CurrencySwitcher from './CurrencySwitcher';
+import {
+  Button,
+  Text,
+  Avatar,
+  Divider,
+  makeStyles,
+  tokens,
+  shorthands,
+  mergeClasses
+} from '@fluentui/react-components';
+import {
+  ChevronLeft24Regular,
+  ChevronRight24Regular,
+  Board24Regular,
+  Payment24Regular,
+  Money24Regular,
+  ChartMultiple24Regular,
+  Folder24Regular,
+  BuildingBank24Regular,
+  Person24Regular,
+  SignOut24Regular
+} from '@fluentui/react-icons';
 import './Layout.css';
 
+const useStyles = makeStyles({
+  layout: {
+    display: 'flex',
+    height: '100vh',
+    backgroundColor: tokens.colorNeutralBackground1
+  },
+  sidebar: {
+    display: 'flex',
+    flexDirection: 'column',
+    // background: 'linear-gradient(180deg, #667eea 0%, #764ba2 50%, #5a67d8 100%)',
+    borderRight: 'none',
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    overflow: 'hidden',
+    boxShadow: '4px 0 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+    color: 'black',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.02) 100%)',
+      pointerEvents: 'none'
+    }
+  },
+  sidebarOpen: {
+    width: '280px'
+  },
+  sidebarClosed: {
+    width: '72px'
+  },
+  sidebarHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...shorthands.padding(tokens.spacingVerticalXL, tokens.spacingHorizontalL),
+    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    minHeight: '80px',
+    paddingLeft: '10px',
+    position: 'relative',
+    backdropFilter: 'blur(10px)',
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: 0,
+      left: '20px',
+      right: '20px',
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)'
+    }
+  },
+  logo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM
+  },
+  logoIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '28px',
+    color: 'white',
+    fontWeight: 'bold',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      transform: 'scale(1.05)',
+      boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+    }
+  },
+  logoText: {
+    fontSize: '22px',
+    fontWeight: '700',
+    color: 'black',
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    letterSpacing: '-0.5px',
+    marginLeft: '10px',
+  },
+  toggleButton: {
+    minWidth: '36px',
+    height: '36px',
+    backgroundColor: 'rgba(44, 41, 41, 0.15)',
+    color: 'black',
+    borderRadius: '8px',
+    border: '1px solid rgba(0, 0, 0, 0)',
+    backdropFilter: 'blur(10px)',
+    transition: 'all 0.2s ease',
+    marginRight: '10px',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      transform: 'scale(1.05)',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+    }
+  },
+  nav: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    ...shorthands.padding(tokens.spacingVerticalL, tokens.spacingHorizontalM),
+    gap: '6px',
+    overflowY: 'auto',
+    paddingLeft: '10px',
+    paddingRight: '10px',
+    '&::-webkit-scrollbar': {
+      width: '4px'
+    },
+    '&::-webkit-scrollbar-track': {
+      background: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '2px'
+    },
+    '&::-webkit-scrollbar-thumb': {
+      background: 'rgba(255, 255, 255, 0.3)',
+      borderRadius: '2px',
+      '&:hover': {
+        background: 'rgba(255, 255, 255, 0.5)'
+      }
+    }
+  },
+  navItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    ...shorthands.padding(tokens.spacingVerticalM, tokens.spacingHorizontalM),
+    borderRadius: '5px',
+    textDecoration: 'none',
+    paddingLeft: '10px',
+    color: 'rgba(0, 0, 0, 0.7)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    minHeight: '44px',
+    position: 'relative',
+    backgroundColor: 'transparent',
+    border: 'none',
+    width: '100%',
+    justifyContent: 'flex-start',
+    marginBottom: '2px',
+    '&:hover': {
+      backgroundColor: 'rgba(0, 0, 0, 0.05)',
+      color: 'black',
+      transform: 'translateX(4px)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '3px',
+      height: '0',
+      background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: '0 2px 2px 0',
+      transition: 'height 0.3s ease'
+    },
+    '&:hover::before': {
+      height: '60%'
+    }
+  },
+  navItemActive: {
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    color: 'black',
+    fontWeight: '600',
+    border: '1px solid rgba(102, 126, 234, 0.2)',
+    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.15)',
+    '&:hover': {
+      backgroundColor: 'rgba(102, 126, 234, 0.15)',
+      transform: 'translateX(4px)',
+      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)'
+    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '4px',
+      height: '70%',
+      background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
+      borderRadius: '0 2px 2px 0',
+      boxShadow: '0 0 8px rgba(102, 126, 234, 0.3)'
+    }
+  },
+  navIcon: {
+    fontSize: '20px',
+    minWidth: '20px',
+    width: '20px',
+    height: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'inherit',
+    filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+    transition: 'all 0.3s ease'
+  },
+  navLabel: {
+    fontSize: '15px',
+    fontWeight: '500',
+    color: 'inherit',
+    letterSpacing: '0.3px',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+  },
+  sidebarFooter: {
+    ...shorthands.padding(tokens.spacingVerticalL, tokens.spacingHorizontalL),
+    borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backdropFilter: 'blur(10px)',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: '20px',
+      right: '20px',
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%)'
+    }
+  },
+  userInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    marginBottom: tokens.spacingVerticalM,
+    ...shorthands.padding(tokens.spacingVerticalM),
+    borderRadius: '12px',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+    }
+  },
+  userDetails: {
+    flex: 1,
+    minWidth: 0
+  },
+  userName: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: 'white',
+    margin: 0,
+    marginBottom: '4px',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+    letterSpacing: '0.3px'
+  },
+  userEmail: {
+    fontSize: '13px',
+    color: 'rgba(255, 255, 255, 0.85)',
+    margin: 0,
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+    letterSpacing: '0.2px'
+  },
+  mainContent: {
+    flex: 1,
+    overflow: 'auto',
+    backgroundColor: tokens.colorNeutralBackground1,
+    ...shorthands.padding(tokens.spacingVerticalL, tokens.spacingHorizontalL)
+  }
+});
+
 const Layout: React.FC = () => {
+  const styles = useStyles();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,66 +311,88 @@ const Layout: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/transactions', label: 'Transactions', icon: '💳' },
-    { path: '/budgets', label: 'Budgets', icon: '💰' },
-    { path: '/analytics', label: 'Analytics', icon: '📈' },
-    { path: '/categories', label: 'Categories', icon: '📁' },
-    { path: '/profile', label: 'Profile', icon: '👤' },
+    { path: '/dashboard', label: 'Dashboard', icon: <Board24Regular /> },
+    { path: '/transactions', label: 'Transactions', icon: <Payment24Regular /> },
+    { path: '/budgets', label: 'Budgets', icon: <Money24Regular /> },
+    { path: '/analytics', label: 'Analytics', icon: <ChartMultiple24Regular /> },
+    { path: '/categories', label: 'Categories', icon: <Folder24Regular /> },
+    { path: '/accounts', label: 'Accounts', icon: <BuildingBank24Regular /> },
+    { path: '/profile', label: 'Profile', icon: <Person24Regular /> },
   ];
 
   return (
-    <div className="layout">
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header">
-          <h1 className="logo">
-            <span className="logo-emoji">💸</span>
-            {isSidebarOpen && <span className="logo-text">FinFusion</span>}
-          </h1>
-          <button 
-            className="toggle-btn" 
+    <div className={styles.layout}>
+      <aside className={mergeClasses(
+        styles.sidebar,
+        isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
+      )}>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.logo}>
+            <div className={styles.logoIcon}>💰</div>
+            {isSidebarOpen && <Text className={styles.logoText}>FinFusion</Text>}
+          </div>
+          <Button
+            appearance="transparent"
+            icon={isSidebarOpen ? <ChevronLeft24Regular /> : <ChevronRight24Regular />}
+            className={styles.toggleButton}
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            {isSidebarOpen ? '▶' : '◀'}
-          </button>
+          />
         </div>
 
-        {isSidebarOpen && (
-          <div className="currency-section">
-            <CurrencySwitcher />
-          </div>
-        )}
-
-        <nav className="nav">
+        <nav className={styles.nav}>
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+              style={{ textDecoration: 'none', width: '100%' }}
             >
-              <span className="nav-icon">{item.icon}</span>
-              {isSidebarOpen && <span className="nav-label">{item.label}</span>}
+              <Button
+                appearance="transparent"
+                className={mergeClasses(
+                  styles.navItem,
+                  isActive(item.path) ? styles.navItemActive : ''
+                )}
+                style={{ 
+                  width: '100%', 
+                  justifyContent: 'flex-start',
+                  textAlign: 'left',
+                  backgroundColor: 'transparent',
+                  color: 'inherit'
+                }}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                {isSidebarOpen && <Text className={styles.navLabel}>{item.label}</Text>}
+              </Button>
             </Link>
           ))}
         </nav>
 
         {isSidebarOpen && (
-          <div className="sidebar-footer">
-            <div className="user-info">
-              <div className="user-avatar">{user?.name?.charAt(0).toUpperCase()}</div>
-              <div className="user-details">
-                <p className="user-name">{user?.name}</p>
-                <p className="user-email">{user?.email}</p>
+          <div className={styles.sidebarFooter}>
+            <div className={styles.userInfo}>
+              <Avatar
+                name={user?.name}
+                size={32}
+                color="colorful"
+              />
+              <div className={styles.userDetails}>
+                <Text className={styles.userName}>{user?.name}</Text>
+                <Text className={styles.userEmail}>{user?.email}</Text>
               </div>
             </div>
-            <button className="logout-btn" onClick={handleLogout}>
+            <Button
+              appearance="secondary"
+              icon={<SignOut24Regular />}
+              onClick={handleLogout}
+              style={{ width: '100%' }}
+            >
               Logout
-            </button>
+            </Button>
           </div>
         )}
       </aside>
 
-      <main className="main-content">
+      <main className={styles.mainContent}>
         <Outlet />
       </main>
     </div>

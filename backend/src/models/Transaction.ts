@@ -8,6 +8,7 @@ export interface Transaction {
   amount: number;
   type: 'INCOME' | 'EXPENSE';
   categoryId: string;
+  accountId?: string;
   date: Date;
   description?: string;
   paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
@@ -22,6 +23,13 @@ export interface Transaction {
     icon?: string;
     color?: string;
   };
+  account?: {
+    id: string;
+    name: string;
+    type: 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'CASH' | 'INVESTMENT' | 'LOAN' | 'OTHER';
+    balance: number;
+    currency: string;
+  };
 }
 
 export interface CreateTransactionData {
@@ -29,6 +37,7 @@ export interface CreateTransactionData {
   amount: number;
   type: 'INCOME' | 'EXPENSE';
   categoryId: string;
+  accountId?: string;
   date: Date;
   description?: string;
   paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
@@ -40,6 +49,7 @@ export interface UpdateTransactionData {
   amount?: number;
   type?: 'INCOME' | 'EXPENSE';
   categoryId?: string;
+  accountId?: string;
   date?: Date;
   description?: string;
   paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
@@ -75,6 +85,7 @@ export class TransactionModel {
         amount: data.amount,
         type: data.type,
         categoryId: data.categoryId,
+        accountId: data.accountId,
         date: data.date,
         description: data.description,
         paymentMethod: data.paymentMethod,
@@ -89,6 +100,15 @@ export class TransactionModel {
             type: true,
             icon: true,
             color: true
+          }
+        },
+        account: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            balance: true,
+            currency: true
           }
         }
       }

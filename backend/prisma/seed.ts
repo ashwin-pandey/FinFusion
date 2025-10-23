@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { PrismaClient, CategoryType } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -273,6 +273,37 @@ async function main() {
     }
 
     console.log(`✅ Created ${transportSubcategories.length} transportation subcategories`);
+  }
+
+  // Create default Cash accounts for all existing users
+  console.log('💳 Creating default Cash accounts for all users...');
+  
+  const users = await prisma.user.findMany({
+    where: { isActive: true }
+  });
+
+  for (const user of users) {
+    // Check if user already has a Cash account
+    const existingCashAccount = await prisma.account.findFirst({
+      where: {
+        userId: user.id,
+        type: 'CASH'
+      }
+    });
+
+    if (!existingCashAccount) {
+      await prisma.account.create({
+        data: {
+          userId: user.id,
+          name: 'Cash',
+          type: 'CASH',
+          balance: 0,
+          currency: 'USD',
+          isActive: true
+        }
+      });
+      console.log(`✅ Created default Cash account for user: ${user.email}`);
+    }
   }
 
   console.log('🎉 Database seeding completed successfully!');

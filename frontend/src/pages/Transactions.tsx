@@ -1,16 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
+import { useAccounts } from '../hooks/useAccounts';
 import { useCurrency } from '../contexts/CurrencyContext';
+import ClickableNumber from '../components/ClickableNumber';
+import { Account } from '../services/accountService';
 import { formatDate, formatPaymentMethod } from '../utils/formatters';
 import { Transaction } from '../types';
 import { exportToCSV } from '../utils/exportHelpers';
 import transactionService from '../services/transactionService';
+import { Button, Input, Select, Option, Text, makeStyles, tokens } from '@fluentui/react-components';
+import { 
+  ArrowClockwise24Regular, 
+  ArrowDownload24Regular, 
+  ArrowUpload24Regular, 
+  Add24Regular,
+  Edit24Regular,
+  Delete24Regular,
+  ChevronLeft24Regular,
+  ChevronRight24Regular
+} from '@fluentui/react-icons';
 import './Transactions.css';
 
+const useStyles = makeStyles({
+  pageActions: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS,
+  },
+  pagination: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    justifyContent: 'center',
+    marginTop: tokens.spacingVerticalL,
+  },
+  formActions: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalM,
+    justifyContent: 'flex-end',
+    marginTop: tokens.spacingVerticalL,
+    alignItems: 'center',
+  },
+});
+
 const Transactions: React.FC = () => {
+  const styles = useStyles();
   const { transactions, pagination, filters, isLoading, fetchTransactions, createTransaction, updateTransaction, deleteTransaction, setFilters } = useTransactions(false);
-  const { categories, fetchCategories } = useCategories(undefined, false);
+  const { categories, fetchCategories, error: categoriesError } = useCategories(undefined, false);
+  const { accounts, fetchAccounts, error: accountsError } = useAccounts(false);
   const { formatCurrency } = useCurrency();
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -22,6 +65,7 @@ const Transactions: React.FC = () => {
     amount: '',
     type: 'EXPENSE' as 'INCOME' | 'EXPENSE',
     categoryId: '',
+    accountId: '',
     date: new Date().toISOString().split('T')[0],
     description: '',
     paymentMethod: 'CASH' as any,
@@ -30,7 +74,17 @@ const Transactions: React.FC = () => {
   useEffect(() => {
     fetchTransactions();
     fetchCategories();
+    fetchAccounts();
   }, []);
+
+  const handleRefreshData = async () => {
+    try {
+      await fetchCategories();
+      await fetchAccounts();
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  };
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters({ ...filters, [key]: value, page: 1 });
@@ -85,6 +139,7 @@ const Transactions: React.FC = () => {
       amount: transaction.amount.toString(),
       type: transaction.type,
       categoryId: transaction.categoryId,
+      accountId: transaction.accountId || '',
       date: new Date(transaction.date).toISOString().split('T')[0],
       description: transaction.description || '',
       paymentMethod: transaction.paymentMethod || 'CASH',
@@ -111,6 +166,7 @@ const Transactions: React.FC = () => {
       amount: '',
       type: 'EXPENSE',
       categoryId: '',
+      accountId: '',
       date: new Date().toISOString().split('T')[0],
       description: '',
       paymentMethod: 'CASH',
@@ -161,53 +217,98 @@ const Transactions: React.FC = () => {
   };
 
   const filteredCategories = categories.filter((c) => c.type === formData.type);
+  
 
   return (
     <div className="transactions-page">
       <div className="page-header">
         <h1>Transactions</h1>
-        <div className="header-actions">
-          <button className="btn btn-secondary" onClick={handleExport} disabled={transactions.length === 0}>
-            📥 Export CSV
+        <div className={styles.pageActions}>
+          <button className="action-btn edit-btn" onClick={handleRefreshData}>
+            <ArrowClockwise24Regular /> Refresh Data
           </button>
-          <button className="btn btn-secondary" onClick={handleImportClick}>
-            📤 Import CSV
+          <button className="action-btn edit-btn" onClick={handleExport} disabled={transactions.length === 0}>
+            <ArrowDownload24Regular /> Export CSV
           </button>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            + Add Transaction
+          <button className="action-btn edit-btn" onClick={handleImportClick}>
+            <ArrowUpload24Regular /> Import CSV
+          </button>
+          <button className="action-btn edit-btn" onClick={() => setShowModal(true)}>
+            <Add24Regular /> Add Transaction
           </button>
         </div>
       </div>
 
+      {/* Transaction Summary */}
+      {transactions.length > 0 && (
+        <div className="summary-card">
+          <div className="summary-content">
+            <div className="total-balance">
+              <div className="balance-icon">💰</div>
+              <div className="balance-info">
+                <h2><ClickableNumber value={transactions.reduce((sum: number, t: Transaction) => sum + (t.type === 'INCOME' ? t.amount : -t.amount), 0)} /></h2>
+                <p>Net Balance</p>
+              </div>
+            </div>
+            <div className="summary-stats">
+              <div className="stat-item">
+                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'INCOME').length}</span>
+                <span className="stat-label">Income</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'EXPENSE').length}</span>
+                <span className="stat-label">Expenses</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{transactions.length}</span>
+                <span className="stat-label">Total</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="filters">
-        <select
-          value={filters.type || ''}
-          onChange={(e) => handleFilterChange('type', e.target.value || undefined)}
-        >
-          <option value="">All Types</option>
-          <option value="INCOME">Income</option>
-          <option value="EXPENSE">Expense</option>
-        </select>
+      <div className="filters-section">
+        <div className="filter-group">
+          <label><Text weight="semibold">Transaction Type</Text></label>
+          <select
+            value={filters.type || ''}
+            onChange={(e) => handleFilterChange('type', e.target.value || undefined)}
+            className="fluent-select"
+          >
+            <option value="">All Types</option>
+            <option value="INCOME">Income</option>
+            <option value="EXPENSE">Expense</option>
+          </select>
+        </div>
 
-        <select
-          value={filters.categoryId || ''}
-          onChange={(e) => handleFilterChange('categoryId', e.target.value || undefined)}
-        >
-          <option value="">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.icon} {cat.name}
-            </option>
-          ))}
-        </select>
+        <div className="filter-group">
+          <label><Text weight="semibold">Category</Text></label>
+          <select
+            value={filters.categoryId || ''}
+            onChange={(e) => handleFilterChange('categoryId', e.target.value || undefined)}
+            className="fluent-select"
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.icon} {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <input
-          type="text"
-          placeholder="Search transactions..."
-          value={filters.search || ''}
-          onChange={(e) => handleFilterChange('search', e.target.value || undefined)}
-        />
+        <div className="filter-group">
+          <label><Text weight="semibold">Search</Text></label>
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            value={filters.search || ''}
+            onChange={(e) => handleFilterChange('search', e.target.value || undefined)}
+            className="fluent-input"
+          />
+        </div>
       </div>
 
       {/* Transactions Table */}
@@ -217,8 +318,8 @@ const Transactions: React.FC = () => {
         ) : transactions.length === 0 ? (
           <div className="empty-state">
             <p>No transactions found</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              Add your first transaction
+            <button className="action-btn edit-btn" onClick={() => setShowModal(true)}>
+              <Add24Regular /> Add your first transaction
             </button>
           </div>
         ) : (
@@ -227,6 +328,7 @@ const Transactions: React.FC = () => {
               <tr>
                 <th>Date</th>
                 <th>Category</th>
+                <th>Account</th>
                 <th>Description</th>
                 <th>Type</th>
                 <th>Amount</th>
@@ -243,6 +345,15 @@ const Transactions: React.FC = () => {
                       {transaction.category?.icon} {transaction.category?.name}
                     </span>
                   </td>
+                  <td>
+                    {transaction.account ? (
+                      <span className="account">
+                        {transaction.account.name} ({transaction.account.type.replace('_', ' ')})
+                      </span>
+                    ) : (
+                      <span className="no-account">No account</span>
+                    )}
+                  </td>
                   <td>{transaction.description || '-'}</td>
                   <td>
                     <span className={`badge badge-${transaction.type.toLowerCase()}`}>
@@ -251,16 +362,16 @@ const Transactions: React.FC = () => {
                   </td>
                   <td className={`amount ${transaction.type.toLowerCase()}`}>
                     {transaction.type === 'INCOME' ? '+' : '-'}
-                    {formatCurrency(transaction.amount)}
+                    <ClickableNumber value={transaction.amount} />
                   </td>
                   <td>{formatPaymentMethod(transaction.paymentMethod || 'N/A')}</td>
                   <td>
-                    <div className="action-buttons">
-                      <button className="btn-icon" onClick={() => handleEdit(transaction)} title="Edit">
-                        ✏️
+                    <div className={styles.actionButtons}>
+                      <button className="action-btn edit-btn" onClick={() => handleEdit(transaction)}>
+                        <Edit24Regular /> Edit
                       </button>
-                      <button className="btn-icon" onClick={() => handleDelete(transaction.id)} title="Delete">
-                        🗑️
+                      <button className="action-btn delete-btn" onClick={() => handleDelete(transaction.id)}>
+                        <Delete24Regular /> Delete
                       </button>
                     </div>
                   </td>
@@ -272,21 +383,23 @@ const Transactions: React.FC = () => {
 
         {/* Pagination */}
         {pagination.pages > 1 && (
-          <div className="pagination">
-            <button
+          <div className={styles.pagination}>
+            <button 
+              className="action-btn edit-btn"
               disabled={pagination.page === 1}
               onClick={() => handleFilterChange('page', pagination.page - 1)}
             >
-              Previous
+              <ChevronLeft24Regular /> Previous
             </button>
             <span>
               Page {pagination.page} of {pagination.pages}
             </span>
-            <button
+            <button 
+              className="action-btn edit-btn"
               disabled={pagination.page === pagination.pages}
               onClick={() => handleFilterChange('page', pagination.page + 1)}
             >
-              Next
+              Next <ChevronRight24Regular />
             </button>
           </div>
         )}
@@ -303,23 +416,22 @@ const Transactions: React.FC = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Type</label>
+                  <label><Text weight="semibold">Type</Text></label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as any, categoryId: '' })}
-                    required
+                    className="fluent-select"
                   >
                     <option value="EXPENSE">Expense</option>
                     <option value="INCOME">Income</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Amount</label>
-                  <input
+                  <label><Text weight="semibold">Amount</Text></label>
+                  <Input
                     type="number"
-                    step="0.01"
                     value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    onChange={(_, data) => setFormData({ ...formData, amount: data.value })}
                     required
                   />
                 </div>
@@ -327,47 +439,85 @@ const Transactions: React.FC = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Category</label>
+                  <label><Text weight="semibold">Category</Text></label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                    className="fluent-select"
                     required
                   >
                     <option value="">Select category</option>
-                    {filteredCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.icon} {cat.name}
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.name}
+                        </option>
+                      ))
+                    ) : categories.length > 0 ? (
+                      // Show all categories if filtered is empty
+                      categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.name} ({cat.type})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {categoriesError ? 'Error loading categories' : 'Loading categories...'}
                       </option>
-                    ))}
+                    )}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Date</label>
-                  <input
+                  <label><Text weight="semibold">Account (Optional)</Text></label>
+                  <select
+                    value={formData.accountId}
+                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                    className="fluent-select"
+                  >
+                    <option value="">No account</option>
+                    {accounts.length > 0 ? (
+                      accounts.map((account: Account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.name} ({account.type.replace('_', ' ')}) - <ClickableNumber value={account.balance} />
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {accountsError ? 'Error loading accounts' : 'Loading accounts...'}
+                      </option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label><Text weight="semibold">Date</Text></label>
+                  <Input
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(_, data) => setFormData({ ...formData, date: data.value })}
                     required
                   />
+                </div>
+                <div className="form-group">
+                  <label><Text weight="semibold">Payment Method</Text></label>
+                  <select
+                    value={formData.paymentMethod}
+                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as any })}
+                    className="fluent-select"
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="CARD">Card</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="DIGITAL_WALLET">Digital Wallet</option>
+                    <option value="OTHER">Other</option>
+                  </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Payment Method</label>
-                <select
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as any })}
-                >
-                  <option value="CASH">Cash</option>
-                  <option value="CARD">Card</option>
-                  <option value="BANK_TRANSFER">Bank Transfer</option>
-                  <option value="DIGITAL_WALLET">Digital Wallet</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Description (Optional)</label>
+                <label><Text weight="semibold">Description (Optional)</Text></label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -376,12 +526,20 @@ const Transactions: React.FC = () => {
                 />
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+              <div className={styles.formActions}>
+                <button className="action-btn edit-btn" type="button" onClick={resetForm}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingTransaction ? 'Update' : 'Create'}
+                <button className="action-btn edit-btn" type="submit">
+                  {editingTransaction ? (
+                    <>
+                      <Edit24Regular /> Update
+                    </>
+                  ) : (
+                    <>
+                      <Add24Regular /> Create
+                    </>
+                  )}
                 </button>
               </div>
             </form>

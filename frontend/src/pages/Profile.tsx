@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { CURRENCIES } from '../contexts/CurrencyContext';
+import { Button, Input, Select, Option, Text } from '@fluentui/react-components';
 import './Profile.css';
 
 const Profile: React.FC = () => {
@@ -78,9 +79,9 @@ const Profile: React.FC = () => {
 
   return (
     <div className="profile-page">
-      <div className="profile-header">
+      <div className="page-header">
         <h1>Profile Settings</h1>
-        <div className="profile-tabs">
+        <div className="tabs">
           <button 
             className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => setActiveTab('profile')}
@@ -102,112 +103,122 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {error && <div className="alert alert-error">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
+
+      {/* Profile Summary */}
+      <div className="profile-summary">
+        <div className="profile-avatar">
+          {user?.name?.charAt(0).toUpperCase()}
+        </div>
+        <div className="profile-info">
+          <h2 className="profile-name">{user?.name}</h2>
+          <p className="profile-email">{user?.email}</p>
+          <p className="profile-role">
+            User • Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
+          </p>
+        </div>
+      </div>
 
       <div className="profile-content">
         {activeTab === 'profile' && (
           <div className="profile-section">
-            <div className="profile-card">
-              <div className="profile-avatar">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="profile-info">
-                <h2>{user?.name}</h2>
-                <p>{user?.email}</p>
-                <p className="member-since">
-                  Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                </p>
-              </div>
-            </div>
-
             <form onSubmit={handleProfileUpdate} className="profile-form">
               <h3>Update Profile</h3>
               <div className="form-group">
-                <label htmlFor="name">Full Name</label>
-                <input
+                <label htmlFor="name"><Text weight="semibold">Full Name</Text></label>
+                <Input
                   type="text"
                   id="name"
                   value={profileForm.name}
-                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                  onChange={(_, data) => setProfileForm({ ...profileForm, name: data.value })}
                   required
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <input
+                <label htmlFor="email"><Text weight="semibold">Email</Text></label>
+                <Input
                   type="email"
                   id="email"
                   value={profileForm.email}
-                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  onChange={(_, data) => setProfileForm({ ...profileForm, email: data.value })}
                   required
                 />
               </div>
-              <button type="submit" className="btn-primary" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                appearance="primary" 
+                disabled={isLoading}
+              >
                 {isLoading ? 'Updating...' : 'Update Profile'}
-              </button>
+              </Button>
             </form>
           </div>
         )}
 
         {activeTab === 'password' && (
-          <div className="password-section">
-            <form onSubmit={handlePasswordChange} className="password-form">
+          <div className="form-card">
+            <form onSubmit={handlePasswordChange}>
               <h3>Change Password</h3>
               <div className="form-group">
-                <label htmlFor="currentPassword">Current Password</label>
-                <input
+                <label htmlFor="currentPassword"><Text weight="semibold">Current Password</Text></label>
+                <Input
                   type="password"
                   id="currentPassword"
                   value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  onChange={(_, data) => setPasswordForm({ ...passwordForm, currentPassword: data.value })}
                   required
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="newPassword">New Password</label>
-                <input
+                <label htmlFor="newPassword"><Text weight="semibold">New Password</Text></label>
+                <Input
                   type="password"
                   id="newPassword"
                   value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  onChange={(_, data) => setPasswordForm({ ...passwordForm, newPassword: data.value })}
                   required
                   minLength={8}
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm New Password</label>
-                <input
+                <label htmlFor="confirmPassword"><Text weight="semibold">Confirm New Password</Text></label>
+                <Input
                   type="password"
                   id="confirmPassword"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  onChange={(_, data) => setPasswordForm({ ...passwordForm, confirmPassword: data.value })}
                   required
                 />
               </div>
-              <button type="submit" className="btn-primary" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                appearance="primary" 
+                disabled={isLoading}
+              >
                 {isLoading ? 'Changing...' : 'Change Password'}
-              </button>
+              </Button>
             </form>
           </div>
         )}
 
         {activeTab === 'preferences' && (
-          <div className="preferences-section">
+          <div className="form-card">
             <h3>Preferences</h3>
             <div className="preference-group">
-              <label>Default Currency</label>
+              <label><Text weight="semibold">Default Currency</Text></label>
               <div className="currency-options">
                 {CURRENCIES.map((curr) => (
-                  <button
+                  <Button
                     key={curr.code}
-                    className={`currency-option ${curr.code === currency.code ? 'selected' : ''}`}
+                    appearance={curr.code === currency.code ? "primary" : "secondary"}
                     onClick={() => handleCurrencyChange(curr)}
+                    className="currency-option"
                   >
                     <span className="currency-symbol">{curr.symbol}</span>
                     <span className="currency-code">{curr.code}</span>
                     <span className="currency-name">{curr.name}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

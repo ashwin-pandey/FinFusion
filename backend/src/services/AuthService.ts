@@ -1,6 +1,7 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { UserModel, CreateUserData } from '../models/User';
+import { AccountModel } from '../models/Account';
 
 export interface AuthTokens {
   accessToken: string;
@@ -84,6 +85,22 @@ export class AuthService {
     };
 
     user = await UserModel.create(userData);
+    
+    // Create default Cash account for new Google user
+    try {
+      await AccountModel.create({
+        userId: user.id,
+        name: 'Cash',
+        type: 'CASH',
+        balance: 0,
+        currency: 'USD',
+        isActive: true
+      });
+    } catch (accountError) {
+      console.error('Failed to create default Cash account for Google user:', accountError);
+      // Don't fail user creation if account creation fails
+    }
+    
     return { user, isNewUser: true };
   }
 

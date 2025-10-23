@@ -12,6 +12,7 @@ import categoryRoutes from './routes/categories';
 import budgetRoutes from './routes/budgets';
 import analyticsRoutes from './routes/analytics';
 import adminRoutes from './routes/admin';
+import accountRoutes from './routes/accounts';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -111,6 +112,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/accounts', accountRoutes);
 
 // Error handling middleware
 app.use(notFound);

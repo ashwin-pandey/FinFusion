@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useCategories } from '../hooks/useCategories';
+import { useAuth } from '../hooks/useAuth';
 import { Category } from '../types';
+import { Button, Text } from '@fluentui/react-components';
+import { Edit24Regular, Delete24Regular } from '@fluentui/react-icons';
 import './Categories.css';
 
 const Categories: React.FC = () => {
   const { categories, incomeCategories, expenseCategories, isLoading, createCategory, updateCategory, deleteCategory, fetchCategories } = useCategories(undefined, false);
+  const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [activeTab, setActiveTab] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [deleteConfirm, setDeleteConfirm] = useState<Category | null>(null);
+  
+  const isAdmin = (user as any)?.role === 'ADMIN';
   const [formData, setFormData] = useState({
     name: '',
     type: 'EXPENSE' as 'INCOME' | 'EXPENSE',
@@ -84,17 +91,32 @@ const Categories: React.FC = () => {
   };
 
   const handleDelete = async (id: string, category: Category) => {
-    if (category.isSystem) {
+    if (category.isSystem && !isAdmin) {
       alert('Cannot delete system categories');
       return;
     }
-    if (window.confirm(`Are you sure you want to delete "${category.name}"? This will also delete all subcategories and associated transactions.`)) {
-      try {
-        await deleteCategory(id);
-        // Don't call fetchCategories() - the Redux action already updates the state
-      } catch (error) {
-        console.error('Failed to delete category:', error);
-        alert('Failed to delete category. Please try again.');
+    
+    // Check if category has subcategories
+    if (category.subCategories && category.subCategories.length > 0) {
+      alert('Cannot delete category with subcategories. Please delete all subcategories first.');
+      return;
+    }
+    
+    const warningMessage = category.isSystem 
+      ? `Are you sure you want to delete the system category "${category.name}"? This will affect all users.`
+      : `Are you sure you want to delete "${category.name}"?`;
+    
+    // First confirmation
+    if (window.confirm(warningMessage)) {
+      // Second confirmation
+      if (window.confirm(`This action cannot be undone. All transactions using this category will be affected. Continue?`)) {
+        try {
+          await deleteCategory(id);
+          // Don't call fetchCategories() - the Redux action already updates the state
+        } catch (error) {
+          console.error('Failed to delete category:', error);
+          alert('Failed to delete category. Please try again.');
+        }
       }
     }
   };
@@ -127,31 +149,63 @@ const Categories: React.FC = () => {
     <div className="categories-page">
       <div className="page-header">
         <h1>Categories</h1>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <Button 
+          appearance="primary" 
+          onClick={() => setShowModal(true)}
+        >
           + Add Category
-        </button>
+        </Button>
       </div>
+
+      {/* Category Summary */}
+      {categories.length > 0 && (
+        <div className="summary-card">
+          <div className="summary-content">
+            <div className="total-categories">
+              <div className="categories-icon">📂</div>
+              <div className="categories-info">
+                <h2>{categories.length}</h2>
+                <p>Total Categories</p>
+              </div>
+            </div>
+            <div className="summary-stats">
+              <div className="stat-item">
+                <span className="stat-number">{incomeCategories.length}</span>
+                <span className="stat-label">Income</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{expenseCategories.length}</span>
+                <span className="stat-label">Expenses</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{categories.filter(c => c.parentCategoryId).length}</span>
+                <span className="stat-label">Sub-categories</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'ALL' ? 'active' : ''}`}
+        <Button
+          appearance={activeTab === 'ALL' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('ALL')}
         >
           All ({categories.length})
-        </button>
-        <button
-          className={`tab ${activeTab === 'INCOME' ? 'active' : ''}`}
+        </Button>
+        <Button
+          appearance={activeTab === 'INCOME' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('INCOME')}
         >
           Income ({incomeCategories.length})
-        </button>
-        <button
-          className={`tab ${activeTab === 'EXPENSE' ? 'active' : ''}`}
+        </Button>
+        <Button
+          appearance={activeTab === 'EXPENSE' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('EXPENSE')}
         >
           Expenses ({expenseCategories.length})
-        </button>
+        </Button>
       </div>
 
       {/* Categories Grid */}
@@ -161,9 +215,12 @@ const Categories: React.FC = () => {
         ) : displayCategories.length === 0 ? (
           <div className="empty-state">
             <p>No categories found</p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+            <Button 
+              appearance="primary" 
+              onClick={() => setShowModal(true)}
+            >
               Create your first category
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="categories-grid">
@@ -180,41 +237,18 @@ const Categories: React.FC = () => {
                     </span>
                     <div>
                       <h3>{category.name}</h3>
-                      {category.parentCategory && (
-                        <p className="subcategory-of">
-                          Subcategory of {category.parentCategory.name}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                  <div className="category-actions">
-                    {!category.isSystem && (
-                      <>
-                        <button
-                          className="btn-icon"
-                          onClick={() => handleEdit(category)}
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="btn-icon"
-                          onClick={() => handleDelete(category.id, category)}
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
 
-                <div className="category-info">
-                  <span className={`badge badge-${category.type.toLowerCase()}`}>
-                    {category.type}
-                  </span>
-                  {category.isSystem && <span className="badge badge-system">System</span>}
-                </div>
+                {/* Parent Category Info */}
+                {category.parentCategory && (
+                  <div className="parent-category-info">
+                    <span className="parent-category-badge">
+                      📁 {category.parentCategory.name}
+                    </span>
+                  </div>
+                )}
 
                 {/* Subcategories */}
                 {category.subCategories && category.subCategories.length > 0 && (
@@ -229,6 +263,33 @@ const Categories: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                <div className="category-info">
+                  <span className={`badge badge-${category.type.toLowerCase()}`}>
+                    {category.type}
+                  </span>
+                  {(!category.isSystem || isAdmin) && (
+                    <div className="category-actions">
+                      <button
+                        className="action-btn edit-btn"
+                        onClick={() => handleEdit(category)}
+                        title="Edit Category"
+                      >
+                        <Edit24Regular />
+                        Edit
+                      </button>
+                      <button
+                        className="action-btn danger-btn"
+                        onClick={() => handleDelete(category.id, category)}
+                        title="Delete Category"
+                        disabled={category.subCategories && category.subCategories.length > 0}
+                      >
+                        <Delete24Regular />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -327,12 +388,19 @@ const Categories: React.FC = () => {
               </div>
 
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <Button 
+                  type="button" 
+                  appearance="secondary" 
+                  onClick={resetForm}
+                >
                   Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button 
+                  type="submit" 
+                  appearance="primary"
+                >
                   {editingCategory ? 'Update' : 'Create'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

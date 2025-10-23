@@ -5,6 +5,7 @@ import transactionReducer from './slices/transactionSlice';
 import categoryReducer from './slices/categorySlice';
 import budgetReducer from './slices/budgetSlice';
 import analyticsReducer from './slices/analyticsSlice';
+import accountReducer from './slices/accountSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     categories: categoryReducer,
     budgets: budgetReducer,
     analytics: analyticsReducer,
+    accounts: accountReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

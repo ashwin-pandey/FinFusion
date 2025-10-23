@@ -6,6 +6,9 @@ import { Budget } from '../types';
 import { formatDate, formatPercentage } from '../utils/formatters';
 import { getBudgetUtilizationColor } from '../utils/chartHelpers';
 import { getStartOfMonth, getEndOfMonth, addMonths, toISODateString } from '../utils/dateHelpers';
+import { Button, Text, Card, CardHeader, CardPreview, CardFooter, Badge, ProgressBar, Divider } from '@fluentui/react-components';
+import { Edit24Regular, Delete24Regular, Calendar24Regular, Money24Regular, Target24Regular } from '@fluentui/react-icons';
+import ClickableNumber from '../components/ClickableNumber';
 import './Budgets.css';
 
 const Budgets: React.FC = () => {
@@ -29,6 +32,7 @@ const Budgets: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
 
   const loadData = async () => {
     try {
@@ -188,15 +192,44 @@ const Budgets: React.FC = () => {
     <div className="budgets-page">
       <div className="page-header">
         <h1>Budgets</h1>
-        <div className="header-actions">
-          <button className="btn btn-secondary" onClick={handleLoadRecommendations}>
-            💡 Get Recommendations
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <div className="page-actions">
+          <button 
+            className="action-btn edit-btn"
+            onClick={() => setShowModal(true)}
+          >
             + Add Budget
           </button>
         </div>
       </div>
+
+      {/* Budget Summary */}
+      {budgets.length > 0 && (
+        <div className="summary-card">
+          <div className="summary-content">
+            <div className="total-balance">
+              <div className="balance-icon">🎯</div>
+              <div className="balance-info">
+                <h2><ClickableNumber value={budgets.reduce((sum: number, b: Budget) => sum + Number(b.amount), 0)} /></h2>
+                <p>Total Budget</p>
+              </div>
+            </div>
+            <div className="summary-stats">
+              <div className="stat-item">
+                <span className="stat-number">{activeBudgets.length}</span>
+                <span className="stat-label">Active</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{unacknowledgedAlerts.length}</span>
+                <span className="stat-label">Alerts</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">{budgets.length}</span>
+                <span className="stat-label">Total</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Alerts Banner */}
       {unacknowledgedAlerts.length > 0 && (
@@ -206,32 +239,35 @@ const Budgets: React.FC = () => {
             <strong>{unacknowledgedAlerts.length} Budget Alert{unacknowledgedAlerts.length > 1 ? 's' : ''}</strong>
             <p>You have budgets exceeding their thresholds</p>
           </div>
-          <button className="btn btn-secondary" onClick={() => setActiveTab('alerts')}>
+          <Button 
+            appearance="secondary" 
+            onClick={() => setActiveTab('alerts')}
+          >
             View Alerts
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Tabs */}
       <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'active' ? 'active' : ''}`}
+        <Button
+          appearance={activeTab === 'active' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('active')}
         >
           Active ({activeBudgets.length})
-        </button>
-        <button
-          className={`tab ${activeTab === 'all' ? 'active' : ''}`}
+        </Button>
+        <Button
+          appearance={activeTab === 'all' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('all')}
         >
           All ({budgets.length})
-        </button>
-        <button
-          className={`tab ${activeTab === 'alerts' ? 'active' : ''}`}
+        </Button>
+        <Button
+          appearance={activeTab === 'alerts' ? 'primary' : 'secondary'}
           onClick={() => setActiveTab('alerts')}
         >
           Alerts ({unacknowledgedAlerts.length})
-        </button>
+        </Button>
       </div>
 
       {/* Content */}
@@ -255,9 +291,9 @@ const Budgets: React.FC = () => {
                       <div className="alert-budget-info">
                         <h3>{budget.category?.icon} {budget.category?.name}</h3>
                         <div className="alert-stats">
-                          <span>Budget: {formatCurrency(budget.amount)}</span>
-                          <span>Spent: {formatCurrency(budget.spentAmount || 0)}</span>
-                          <span>Remaining: {formatCurrency(budget.remainingAmount || 0)}</span>
+                          <span>Budget: <ClickableNumber value={budget.amount} /></span>
+                          <span>Spent: <ClickableNumber value={budget.spentAmount || 0} /></span>
+                          <span>Remaining: <ClickableNumber value={budget.remainingAmount || 0} /></span>
                         </div>
                         <div className="budget-progress">
                           <div
@@ -289,9 +325,12 @@ const Budgets: React.FC = () => {
           ) : displayBudgets.length === 0 ? (
             <div className="empty-state">
               <p>No budgets found</p>
-              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              <Button 
+                appearance="primary" 
+                onClick={() => setShowModal(true)}
+              >
                 Create your first budget
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="budgets-grid">
@@ -307,25 +346,17 @@ const Budgets: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="budget-actions">
-                      <button className="btn-icon" onClick={() => handleEdit(budget)} title="Edit">
-                        ✏️
-                      </button>
-                      <button className="btn-icon" onClick={() => handleDelete(budget.id)} title="Delete">
-                        🗑️
-                      </button>
-                    </div>
                   </div>
 
                   <div className="budget-amount">
                     <div>
                       <p className="label">Budget</p>
-                      <h2>{formatCurrency(budget.amount)}</h2>
+                      <h2><ClickableNumber value={budget.amount} /></h2>
                     </div>
                     <div>
                       <p className="label">Spent</p>
                       <h2 style={{ color: getBudgetUtilizationColor(budget.utilizationPercentage || 0) }}>
-                        {formatCurrency(budget.spentAmount || 0)}
+                        <ClickableNumber value={budget.spentAmount || 0} />
                       </h2>
                     </div>
                   </div>
@@ -333,7 +364,7 @@ const Budgets: React.FC = () => {
                   <div className="budget-progress">
                     <div className="progress-header">
                       <span>{formatPercentage(budget.utilizationPercentage || 0)} used</span>
-                      <span>{formatCurrency(budget.remainingAmount || 0)} left</span>
+                      <span><ClickableNumber value={budget.remainingAmount || 0} /> left</span>
                     </div>
                     <div className="progress-bar-container">
                       <div
@@ -346,13 +377,32 @@ const Budgets: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="budget-footer">
+                  <div className="budget-badges">
                     {budget.allowRollover && <span className="badge badge-info">Rollover Enabled</span>}
                     {budget.alertThreshold && (
                       <span className="budget-alert-threshold">
                         Alert at {formatPercentage(budget.alertThreshold)}
                       </span>
                     )}
+                  </div>
+
+                  <div className="budget-footer">
+                    <div className="budget-actions">
+                      <button 
+                        className="action-btn edit-btn"
+                        onClick={() => handleEdit(budget)} 
+                        title="Edit Budget"
+                      >
+                        <Edit24Regular /> Edit
+                      </button>
+                      <button 
+                        className="action-btn delete-btn"
+                        onClick={() => handleDelete(budget.id)} 
+                        title="Delete Budget"
+                      >
+                        <Delete24Regular /> Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -459,12 +509,19 @@ const Budgets: React.FC = () => {
               </div>
 
               <div className="form-actions">
-                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                <Button 
+                  type="button" 
+                  appearance="secondary" 
+                  onClick={resetForm}
+                >
                   Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button 
+                  type="submit" 
+                  appearance="primary"
+                >
                   {editingBudget ? 'Update' : 'Create'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -488,7 +545,7 @@ const Budgets: React.FC = () => {
                     <div key={index} className="recommendation-card">
                       <h3>{rec.categoryName}</h3>
                       <p className="recommendation-amount">
-                        Recommended: {formatCurrency(rec.recommendedAmount)}
+                        Recommended: <ClickableNumber value={rec.recommendedAmount} />
                       </p>
                       <p className="recommendation-reason">Based on: {rec.basedOn}</p>
                       <p className="recommendation-confidence">

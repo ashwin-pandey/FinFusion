@@ -45,6 +45,7 @@ export interface Transaction {
   amount: number;
   type: TransactionType;
   categoryId: string;
+  accountId?: string;
   date: string;
   description?: string;
   paymentMethod?: PaymentMethod;
@@ -58,6 +59,13 @@ export interface Transaction {
     type: CategoryType;
     icon?: string;
     color?: string;
+  };
+  account?: {
+    id: string;
+    name: string;
+    type: 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'CASH' | 'INVESTMENT' | 'LOAN' | 'OTHER';
+    balance: number;
+    currency: string;
   };
 }
 

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { AuthService } from '../services/AuthService';
+import { AccountModel } from '../models/Account';
 import { logger } from '../utils/logger';
 
 export class AuthController {
@@ -29,6 +30,23 @@ export class AuthController {
 
       // Create user
       const user = await AuthService.createUser(email, password, name);
+      
+      // Create default Cash account for the new user
+      try {
+        await AccountModel.create({
+          userId: user.id,
+          name: 'Cash',
+          type: 'CASH',
+          balance: 0,
+          currency: 'USD',
+          isActive: true
+        });
+        logger.info('Default Cash account created for new user', { userId: user.id });
+      } catch (accountError) {
+        logger.error('Failed to create default Cash account', accountError, { userId: user.id });
+        // Don't fail registration if account creation fails
+      }
+
       const { accessToken, refreshToken } = AuthService.generateTokens(user.id);
 
       logger.auth('User registered successfully', user.id, { email, name });

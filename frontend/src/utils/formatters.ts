@@ -59,6 +59,32 @@ export const formatCompactNumber = (value: number): string => {
   }).format(value);
 };
 
+// Compact currency formatter with click-to-expand functionality
+export const formatCompactCurrency = (amount: number, currency: string = 'USD'): string => {
+  if (Math.abs(amount) >= 10000) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      compactDisplay: 'short',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(amount);
+  }
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+// Check if a number should be displayed in compact format
+export const shouldUseCompactFormat = (value: number): boolean => {
+  return Math.abs(value) >= 10000;
+};
+
 // Format file size
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';

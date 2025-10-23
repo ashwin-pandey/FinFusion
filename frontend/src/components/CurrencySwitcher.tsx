@@ -1,60 +1,59 @@
 import React, { useState } from 'react';
 import { useCurrency, CURRENCIES } from '../contexts/CurrencyContext';
+import {
+  Button,
+  Text,
+  Select,
+  Option,
+  makeStyles,
+  tokens,
+  shorthands
+} from '@fluentui/react-components';
+import {
+  ChevronDown24Regular
+} from '@fluentui/react-icons';
 import './CurrencySwitcher.css';
 
-const CurrencySwitcher: React.FC = () => {
-  const { currency, setCurrency } = useCurrency();
-  const [isOpen, setIsOpen] = useState(false);
+const useStyles = makeStyles({
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXS
+  },
+  label: {
+    fontSize: tokens.fontSizeBase200,
+    fontWeight: tokens.fontWeightMedium,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+  }
+});
 
-  const handleCurrencyChange = (newCurrency: typeof CURRENCIES[0]) => {
-    setCurrency(newCurrency);
-    setIsOpen(false);
+const CurrencySwitcher: React.FC = () => {
+  const styles = useStyles();
+  const { currency, setCurrency } = useCurrency();
+
+  const handleCurrencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCode = event.target.value;
+    const newCurrency = CURRENCIES.find(c => c.code === selectedCode);
+    if (newCurrency) {
+      setCurrency(newCurrency);
+    }
   };
 
   return (
-    <div className="currency-switcher">
-      <button 
-        className="currency-button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Change currency"
+    <div className={styles.container}>
+      <Text className={styles.label}>Currency</Text>
+      <Select
+        value={currency.code}
+        onChange={handleCurrencyChange}
+        style={{ width: '100%' }}
       >
-        <span className="currency-symbol">{currency.symbol}</span>
-        <span className="currency-code">{currency.code}</span>
-        <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
-      </button>
-
-      {isOpen && (
-        <div className="currency-dropdown">
-          <div className="currency-dropdown-header">
-            <h4>Select Currency</h4>
-            <button 
-              className="close-button"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close currency selector"
-            >
-              ×
-            </button>
-          </div>
-          <div className="currency-list">
-            {CURRENCIES.map((curr) => (
-              <button
-                key={curr.code}
-                className={`currency-option ${curr.code === currency.code ? 'selected' : ''}`}
-                onClick={() => handleCurrencyChange(curr)}
-              >
-                <span className="currency-symbol">{curr.symbol}</span>
-                <div className="currency-info">
-                  <span className="currency-code">{curr.code}</span>
-                  <span className="currency-name">{curr.name}</span>
-                </div>
-                {curr.code === currency.code && (
-                  <span className="checkmark">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        {CURRENCIES.map((curr) => (
+          <Option key={curr.code} value={curr.code} text={`${curr.symbol} ${curr.code} - ${curr.name}`}>
+            {curr.symbol} {curr.code} - {curr.name}
+          </Option>
+        ))}
+      </Select>
     </div>
   );
 };

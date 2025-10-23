@@ -15,6 +15,7 @@ import Categories from './pages/Categories';
 import Budgets from './pages/Budgets';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
+import Accounts from './pages/Accounts';
 import NotFound from './pages/NotFound';
 
 import './App.css';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
               <Route path="/categories" element={<Categories />} />
               <Route path="/budgets" element={<Budgets />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/accounts" element={<Accounts />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
           </Route>
