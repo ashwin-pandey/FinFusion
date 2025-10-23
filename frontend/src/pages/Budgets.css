@@ -43,6 +43,7 @@
 .budgets-container,
 .alerts-container {
   min-height: 400px;
+  padding-bottom: 20px; /* Add bottom padding to prevent cropping */
 }
 
 .budgets-grid {
@@ -115,7 +116,11 @@
 }
 
 .budget-progress {
+  height: 20px;
   margin-bottom: 16px;
+  padding-left: 8px;
+  padding-right: 8px;
+  position: relative;
 }
 
 .progress-header {
@@ -128,10 +133,19 @@
 }
 
 .progress-bar-container {
-  height: 10px;
+  height: 12px; /* Increased height for better visibility */
   background: #e0e0e0;
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 6px;
+  position: relative;
+  z-index: 1;
 }
 
 .budget-footer {
@@ -205,8 +219,9 @@
 /* Recommendations */
 .recommendations-content {
   padding: 24px;
-  max-height: 500px;
+  max-height: 600px; /* Increased height */
   overflow-y: auto;
+  padding-bottom: 30px; /* Add extra bottom padding */
 }
 
 .recommendations-list {

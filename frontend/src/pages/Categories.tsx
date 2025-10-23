@@ -25,22 +25,49 @@ const Categories: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
+    if (!formData.name.trim()) {
+      alert('Please enter a category name');
+      return;
+    }
+    
+    if (!formData.type) {
+      alert('Please select a category type');
+      return;
+    }
+    
+    if (!formData.icon) {
+      alert('Please select an icon');
+      return;
+    }
+    
+    if (!formData.color) {
+      alert('Please select a color');
+      return;
+    }
+    
     try {
+      console.log('Submitting category:', formData);
+      
       if (editingCategory) {
+        console.log('Updating category:', editingCategory.id);
         await updateCategory(editingCategory.id, {
           ...formData,
           parentCategoryId: formData.parentCategoryId || undefined,
         });
       } else {
+        console.log('Creating new category');
         await createCategory({
           ...formData,
           parentCategoryId: formData.parentCategoryId || undefined,
         });
       }
       resetForm();
-      fetchCategories();
+      // Don't call fetchCategories() - the Redux action already updates the state
     } catch (error) {
       console.error('Failed to save category:', error);
+      alert('Failed to save category. Please try again.');
     }
   };
 
@@ -64,9 +91,10 @@ const Categories: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete "${category.name}"? This will also delete all subcategories and associated transactions.`)) {
       try {
         await deleteCategory(id);
-        fetchCategories();
+        // Don't call fetchCategories() - the Redux action already updates the state
       } catch (error) {
         console.error('Failed to delete category:', error);
+        alert('Failed to delete category. Please try again.');
       }
     }
   };

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useAnalytics } from '../hooks/useAnalytics';
-import { formatCurrency, formatPercentage, formatDate } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { formatPercentage, formatDate } from '../utils/formatters';
 import { getDateRangeForPeriod, toISODateString } from '../utils/dateHelpers';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getTransactionTypeColor, generateColorPalette } from '../utils/chartHelpers';
 import './Analytics.css';
 
 const Analytics: React.FC = () => {
-  const { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown, isLoading, fetchDashboard, fetchTrends, fetchBreakdown } = useAnalytics(false);
-  const [period, setPeriod] = useState<'this_month' | 'last_month' | 'last_90_days' | 'this_year'>('last_90_days');
+  const { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown, isLoading, error, fetchDashboard, fetchTrends, fetchBreakdown } = useAnalytics(false);
+  const { formatCurrency } = useCurrency();
+  const [period, setPeriod] = useState<'this_month' | 'last_month' | 'last_90_days' | 'this_year' | 'all_time'>('last_90_days');
   const [trendGroupBy, setTrendGroupBy] = useState<'day' | 'week' | 'month'>('week');
 
   useEffect(() => {
@@ -16,16 +18,26 @@ const Analytics: React.FC = () => {
   }, [period, trendGroupBy]);
 
   const loadAnalytics = async () => {
-    const { startDate, endDate } = getDateRangeForPeriod(period);
-    const start = toISODateString(startDate);
-    const end = toISODateString(endDate);
+    if (period === 'all_time') {
+      // For all time, don't pass date filters
+      await Promise.all([
+        fetchDashboard(),
+        fetchTrends(), // No parameters for all time
+        fetchBreakdown('INCOME'),
+        fetchBreakdown('EXPENSE'),
+      ]);
+    } else {
+      const { startDate, endDate } = getDateRangeForPeriod(period);
+      const start = toISODateString(startDate);
+      const end = toISODateString(endDate);
 
-    await Promise.all([
-      fetchDashboard(start, end),
-      fetchTrends(start, end, trendGroupBy),
-      fetchBreakdown('INCOME', start, end),
-      fetchBreakdown('EXPENSE', start, end),
-    ]);
+      await Promise.all([
+        fetchDashboard(start, end),
+        fetchTrends(start, end, trendGroupBy),
+        fetchBreakdown('INCOME', start, end),
+        fetchBreakdown('EXPENSE', start, end),
+      ]);
+    }
   };
 
   if (isLoading && !dashboard) {
@@ -36,23 +48,46 @@ const Analytics: React.FC = () => {
     );
   }
 
+  // Add error handling
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error loading analytics</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!dashboard && !isLoading) {
+    return (
+      <div className="error-container">
+        <h2>Unable to load analytics</h2>
+        <p>Please try refreshing the page or check your connection.</p>
+      </div>
+    );
+  }
+
   const summary = dashboard?.summary;
   const totalTransactions = (summary?.transactionCounts.income || 0) + (summary?.transactionCounts.expenses || 0);
   const avgIncome = summary ? summary.totalIncome / Math.max(summary.transactionCounts.income, 1) : 0;
   const avgExpense = summary ? summary.totalExpenses / Math.max(summary.transactionCounts.expenses, 1) : 0;
 
+  // Debug logging
+  console.log('Analytics data:', { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown });
+
   // Prepare data for combined chart
-  const combinedData = spendingTrends.map((trend: any) => ({
+  const combinedData = Array.isArray(spendingTrends) ? spendingTrends.map((trend: any) => ({
     period: trend.period,
     income: trend.income,
     expenses: trend.expenses,
     net: trend.netIncome,
-  }));
+  })) : [];
 
   // Top spending categories (top 5)
-  const topExpenses = [...expenseBreakdown]
+  const topExpenses = Array.isArray(expenseBreakdown) ? [...expenseBreakdown]
     .sort((a, b) => b.amount - a.amount)
-    .slice(0, 5);
+    .slice(0, 5) : [];
 
   // Calculate spending by day of week (mock data - would need backend support)
   const dayOfWeekData = [
@@ -75,6 +110,7 @@ const Analytics: React.FC = () => {
             <option value="last_month">Last Month</option>
             <option value="last_90_days">Last 90 Days</option>
             <option value="this_year">This Year</option>
+            <option value="all_time">All Time</option>
           </select>
           <select value={trendGroupBy} onChange={(e) => setTrendGroupBy(e.target.value as any)}>
             <option value="day">By Day</option>

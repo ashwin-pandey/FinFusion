@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useBudgets } from '../hooks/useBudgets';
-import { formatCurrency, formatPercentage, formatDate } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { formatPercentage, formatDate } from '../utils/formatters';
 import { getDateRangeForPeriod, toISODateString } from '../utils/dateHelpers';
 import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getBudgetUtilizationColor, getTransactionTypeColor } from '../utils/chartHelpers';
@@ -10,24 +11,36 @@ import './Dashboard.css';
 const Dashboard: React.FC = () => {
   const { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown, isLoading, fetchDashboard, fetchTrends, fetchBreakdown } = useAnalytics();
   const { budgets, fetchBudgets } = useBudgets(true, false);
-  const [period, setPeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'last_90_days'>('this_month');
+  const { formatCurrency } = useCurrency();
+  const [period, setPeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'last_90_days' | 'all_time'>('this_month');
 
   useEffect(() => {
     loadDashboardData();
   }, [period]);
 
   const loadDashboardData = async () => {
-    const { startDate, endDate } = getDateRangeForPeriod(period);
-    const start = toISODateString(startDate);
-    const end = toISODateString(endDate);
+    if (period === 'all_time') {
+      // For all time, don't pass date filters
+      await Promise.all([
+        fetchDashboard(),
+        fetchTrends(), // No parameters for all time
+        fetchBreakdown('INCOME'),
+        fetchBreakdown('EXPENSE'),
+        fetchBudgets(true)
+      ]);
+    } else {
+      const { startDate, endDate } = getDateRangeForPeriod(period);
+      const start = toISODateString(startDate);
+      const end = toISODateString(endDate);
 
-    await Promise.all([
-      fetchDashboard(start, end),
-      fetchTrends(start, end, 'month'),
-      fetchBreakdown('INCOME', start, end),
-      fetchBreakdown('EXPENSE', start, end),
-      fetchBudgets(true)
-    ]);
+      await Promise.all([
+        fetchDashboard(start, end),
+        fetchTrends(start, end, 'month'),
+        fetchBreakdown('INCOME', start, end),
+        fetchBreakdown('EXPENSE', start, end),
+        fetchBudgets(true)
+      ]);
+    }
   };
 
   if (isLoading && !dashboard) {
@@ -51,6 +64,7 @@ const Dashboard: React.FC = () => {
             <option value="last_month">Last Month</option>
             <option value="last_90_days">Last 90 Days</option>
             <option value="this_year">This Year</option>
+            <option value="all_time">All Time</option>
           </select>
         </div>
       </div>

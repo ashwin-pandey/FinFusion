@@ -64,6 +64,30 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   await authService.logout();
 });
 
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (data: { name: string; email: string }, { rejectWithValue }) => {
+    try {
+      const user = await authService.updateProfile(data);
+      return user;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update profile');
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (data: { currentPassword: string; newPassword: string }, { rejectWithValue }) => {
+    try {
+      await authService.changePassword(data);
+      return true;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to change password');
+    }
+  }
+);
+
 // Slice
 const authSlice = createSlice({
   name: 'auth',
@@ -161,9 +185,42 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
     });
+
+    // Update Profile
+    builder
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Change Password
+    builder
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.isLoading = false;
+        state.error = null;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
 export const { clearError, setUser } = authSlice.actions;
 export default authSlice.reducer;
+
+
 

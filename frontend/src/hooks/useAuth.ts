@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
-import { login, register, loginWithGoogle, getCurrentUser, logout, clearError } from '../store/slices/authSlice';
+import { login, register, loginWithGoogle, getCurrentUser, logout, updateProfile, changePassword, clearError } from '../store/slices/authSlice';
 import { LoginCredentials, RegisterData } from '../services/authService';
 
 export const useAuth = () => {
@@ -34,6 +34,14 @@ export const useAuth = () => {
     dispatch(clearError());
   };
 
+  const handleUpdateProfile = async (data: { name: string; email: string }) => {
+    return dispatch(updateProfile(data)).unwrap();
+  };
+
+  const handleChangePassword = async (data: { currentPassword: string; newPassword: string }) => {
+    return dispatch(changePassword(data)).unwrap();
+  };
+
   return {
     user,
     isAuthenticated,
@@ -43,7 +51,11 @@ export const useAuth = () => {
     register: handleRegister,
     loginWithGoogle: handleGoogleLogin,
     logout: handleLogout,
+    updateProfile: handleUpdateProfile,
+    changePassword: handleChangePassword,
     clearError: clearAuthError,
   };
 };
+
+
 

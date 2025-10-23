@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useBudgets } from '../hooks/useBudgets';
 import { useCategories } from '../hooks/useCategories';
+import { useCurrency } from '../contexts/CurrencyContext';
 import { Budget } from '../types';
-import { formatCurrency, formatDate, formatPercentage } from '../utils/formatters';
+import { formatDate, formatPercentage } from '../utils/formatters';
 import { getBudgetUtilizationColor } from '../utils/chartHelpers';
 import { getStartOfMonth, getEndOfMonth, addMonths, toISODateString } from '../utils/dateHelpers';
 import './Budgets.css';
 
 const Budgets: React.FC = () => {
-  const { budgets, alerts, recommendations, isLoading, createBudget, updateBudget, deleteBudget, fetchBudgets, fetchAlerts, fetchRecommendations, acknowledgeAlert } = useBudgets(undefined, false);
+  const { budgets, alerts, recommendations, isLoading, error, createBudget, updateBudget, deleteBudget, fetchBudgets, fetchAlerts, fetchRecommendations, acknowledgeAlert } = useBudgets(undefined, false);
   const { expenseCategories, fetchCategories } = useCategories('EXPENSE', false);
+  const { formatCurrency } = useCurrency();
   const [showModal, setShowModal] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
@@ -29,11 +31,18 @@ const Budgets: React.FC = () => {
   }, []);
 
   const loadData = async () => {
-    await Promise.all([
-      fetchBudgets(),
-      fetchCategories(),
-      fetchAlerts(),
-    ]);
+    try {
+      await Promise.all([
+        fetchBudgets(),
+        fetchCategories(),
+        fetchAlerts().catch(err => {
+          console.warn('Failed to fetch alerts:', err);
+          // Alerts are optional, don't fail the entire page
+        }),
+      ]);
+    } catch (err) {
+      console.error('Failed to load budget data:', err);
+    }
   };
 
   const handlePeriodChange = (period: 'MONTHLY' | 'QUARTERLY' | 'YEARLY') => {
@@ -61,7 +70,26 @@ const Budgets: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    if (!formData.categoryId) {
+      alert('Please select a category');
+      return;
+    }
+    
+    if (!formData.alertThreshold || parseInt(formData.alertThreshold) < 0 || parseInt(formData.alertThreshold) > 100) {
+      alert('Please enter a valid alert threshold (0-100)');
+      return;
+    }
+    
     try {
+      console.log('Submitting budget:', formData);
+      
       const budgetData = {
         ...formData,
         amount: parseFloat(formData.amount),
@@ -69,14 +97,17 @@ const Budgets: React.FC = () => {
       };
 
       if (editingBudget) {
+        console.log('Updating budget:', editingBudget.id);
         await updateBudget(editingBudget.id, budgetData);
       } else {
+        console.log('Creating new budget');
         await createBudget(budgetData);
       }
       resetForm();
-      loadData();
+      // Don't call loadData() - the Redux action already updates the state
     } catch (error) {
       console.error('Failed to save budget:', error);
+      alert('Failed to save budget. Please try again.');
     }
   };
 
@@ -98,9 +129,10 @@ const Budgets: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this budget?')) {
       try {
         await deleteBudget(id);
-        loadData();
+        // Don't call loadData() - the Redux action already updates the state
       } catch (error) {
         console.error('Failed to delete budget:', error);
+        alert('Failed to delete budget. Please try again.');
       }
     }
   };

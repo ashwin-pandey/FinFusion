@@ -78,6 +78,23 @@ class AuthService {
     this.clearTokens();
   }
 
+  // Update profile
+  async updateProfile(data: { name: string; email: string }): Promise<User> {
+    const response = await api.put<ApiResponse<User>>('/auth/profile', data);
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error || 'Failed to update profile');
+  }
+
+  // Change password
+  async changePassword(data: { currentPassword: string; newPassword: string }): Promise<void> {
+    const response = await api.put<ApiResponse<void>>('/auth/password', data);
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to change password');
+    }
+  }
+
   // Token management
   setTokens(tokens: AuthTokens): void {
     localStorage.setItem('accessToken', tokens.accessToken);
@@ -103,4 +120,6 @@ class AuthService {
 }
 
 export default new AuthService();
+
+
 

@@ -4,8 +4,12 @@ import { DashboardOverview, SpendingTrend, CategoryBreakdown, ApiResponse } from
 class AnalyticsService {
   // Get dashboard overview
   async getDashboardOverview(startDate?: string, endDate?: string): Promise<DashboardOverview> {
-    const response = await api.get<ApiResponse<DashboardOverview>>('/analytics/dashboard', {
-      params: { startDate, endDate }
+    const params: any = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    
+    const response = await api.get<ApiResponse<DashboardOverview>>('/analytics/overview', {
+      params
     });
     if (response.data.success && response.data.data) {
       return response.data.data;
@@ -15,12 +19,16 @@ class AnalyticsService {
 
   // Get spending trends
   async getSpendingTrends(
-    startDate: string,
-    endDate: string,
+    startDate?: string,
+    endDate?: string,
     groupBy: 'day' | 'week' | 'month' = 'month'
   ): Promise<SpendingTrend[]> {
+    const params: any = { groupBy };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    
     const response = await api.get<ApiResponse<SpendingTrend[]>>('/analytics/trends', {
-      params: { startDate, endDate, groupBy }
+      params
     });
     if (response.data.success && response.data.data) {
       return response.data.data;
@@ -34,8 +42,12 @@ class AnalyticsService {
     startDate?: string,
     endDate?: string
   ): Promise<CategoryBreakdown[]> {
-    const response = await api.get<ApiResponse<CategoryBreakdown[]>>('/analytics/categories', {
-      params: { type, startDate, endDate }
+    const params: any = { type };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    
+    const response = await api.get<ApiResponse<CategoryBreakdown[]>>('/analytics/category-breakdown', {
+      params
     });
     if (response.data.success && response.data.data) {
       return response.data.data;
@@ -45,4 +57,6 @@ class AnalyticsService {
 }
 
 export default new AnalyticsService();
+
+
 

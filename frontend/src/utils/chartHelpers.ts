@@ -54,3 +54,5 @@ export const formatTooltipValue = (value: number, prefix: string = '$'): string 
   return `${prefix}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
+
+

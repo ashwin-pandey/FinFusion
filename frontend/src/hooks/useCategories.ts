@@ -62,3 +62,5 @@ export const useCategories = (type?: 'INCOME' | 'EXPENSE', autoFetch: boolean = 
   };
 };
 
+
+

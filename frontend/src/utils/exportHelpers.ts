@@ -66,3 +66,5 @@ export const parseCSV = (file: File): Promise<any[]> => {
   });
 };
 
+
+

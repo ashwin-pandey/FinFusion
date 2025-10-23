@@ -23,6 +23,8 @@
   font-size: 14px;
   cursor: pointer;
   transition: border-color 0.2s;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .period-selector select:focus {
@@ -200,4 +202,5 @@
     grid-column: 1;
   }
 }
+
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 
@@ -21,8 +22,9 @@ import './App.css';
 const App: React.FC = () => {
   return (
     <Provider store={store}>
-      <Router>
-        <Routes>
+      <CurrencyProvider>
+        <Router>
+          <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -42,8 +44,9 @@ const App: React.FC = () => {
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+          </Routes>
+        </Router>
+      </CurrencyProvider>
     </Provider>
   );
 };

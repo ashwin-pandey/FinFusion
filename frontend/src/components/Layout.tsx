@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import CurrencySwitcher from './CurrencySwitcher';
 import './Layout.css';
 
 const Layout: React.FC = () => {
@@ -29,14 +30,23 @@ const Layout: React.FC = () => {
     <div className="layout">
       <aside className={`sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <h1 className="logo">💸 FinFusion</h1>
+          <h1 className="logo">
+            <span className="logo-emoji">💸</span>
+            {isSidebarOpen && <span className="logo-text">FinFusion</span>}
+          </h1>
           <button 
             className="toggle-btn" 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            {isSidebarOpen ? '◀' : '▶'}
+            {isSidebarOpen ? '▶' : '◀'}
           </button>
         </div>
+
+        {isSidebarOpen && (
+          <div className="currency-section">
+            <CurrencySwitcher />
+          </div>
+        )}
 
         <nav className="nav">
           {navItems.map((item) => (
@@ -75,4 +85,6 @@ const Layout: React.FC = () => {
 };
 
 export default Layout;
+
+
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
-import { formatCurrency, formatDate, formatPaymentMethod } from '../utils/formatters';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { formatDate, formatPaymentMethod } from '../utils/formatters';
 import { Transaction } from '../types';
 import { exportToCSV } from '../utils/exportHelpers';
 import transactionService from '../services/transactionService';
@@ -10,6 +11,7 @@ import './Transactions.css';
 const Transactions: React.FC = () => {
   const { transactions, pagination, filters, isLoading, fetchTransactions, createTransaction, updateTransaction, deleteTransaction, setFilters } = useTransactions(false);
   const { categories, fetchCategories } = useCategories(undefined, false);
+  const { formatCurrency } = useCurrency();
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -36,22 +38,44 @@ const Transactions: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    if (!formData.categoryId) {
+      alert('Please select a category');
+      return;
+    }
+    
+    if (!formData.date) {
+      alert('Please select a date');
+      return;
+    }
+    
     try {
+      console.log('Submitting transaction:', formData);
+      
       if (editingTransaction) {
+        console.log('Updating transaction:', editingTransaction.id);
         await updateTransaction(editingTransaction.id, {
           ...formData,
           amount: parseFloat(formData.amount),
         });
       } else {
+        console.log('Creating new transaction');
         await createTransaction({
           ...formData,
           amount: parseFloat(formData.amount),
         });
       }
       resetForm();
-      fetchTransactions();
+      // Don't call fetchTransactions() - the Redux action already updates the state
     } catch (error) {
       console.error('Failed to save transaction:', error);
+      alert('Failed to save transaction. Please try again.');
     }
   };
 
@@ -72,9 +96,10 @@ const Transactions: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       try {
         await deleteTransaction(id);
-        fetchTransactions();
+        // Don't call fetchTransactions() - the Redux action already updates the state
       } catch (error) {
         console.error('Failed to delete transaction:', error);
+        alert('Failed to delete transaction. Please try again.');
       }
     }
   };

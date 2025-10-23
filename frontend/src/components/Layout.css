@@ -35,10 +35,31 @@
   font-weight: bold;
   margin: 0;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-emoji {
+  font-size: 28px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .sidebar.closed .logo {
-  font-size: 18px;
+  justify-content: center;
+}
+
+.sidebar.closed .logo-emoji {
+  font-size: 24px;
+}
+
+.currency-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggle-btn {
@@ -159,6 +180,7 @@
   overflow-y: auto;
   background: #f5f6fa;
   padding: 30px;
+  min-height: 0; /* Allow flex item to shrink */
 }
 
 /* Responsive */
@@ -179,4 +201,6 @@
     padding: 15px;
   }
 }
+
+
 

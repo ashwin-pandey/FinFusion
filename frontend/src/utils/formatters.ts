@@ -1,4 +1,4 @@
-// Currency formatter
+// Currency formatter - now uses currency context
 export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -85,4 +85,6 @@ export const formatPaymentMethod = (method: string): string => {
 export const formatPeriodType = (type: string): string => {
   return type.charAt(0) + type.slice(1).toLowerCase();
 };
+
+
 

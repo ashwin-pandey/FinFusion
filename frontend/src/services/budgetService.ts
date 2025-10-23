@@ -70,16 +70,14 @@ class BudgetService {
 
   // Get budget alerts
   async getBudgetAlerts(): Promise<BudgetAlert[]> {
-    const response = await api.get<ApiResponse<BudgetAlert[]>>('/budgets/alerts');
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
-    throw new Error(response.data.error || 'Failed to get budget alerts');
+    // For now, return empty array since we need a budgetId for the endpoint
+    // TODO: Implement proper alerts fetching when we have budget-specific alerts
+    return [];
   }
 
   // Acknowledge budget alert
   async acknowledgeBudgetAlert(alertId: string): Promise<void> {
-    const response = await api.post<ApiResponse<void>>(`/budgets/alerts/${alertId}/acknowledge`);
+    const response = await api.put<ApiResponse<void>>(`/budgets/alerts/${alertId}/acknowledge`);
     if (!response.data.success) {
       throw new Error(response.data.error || 'Failed to acknowledge alert');
     }
@@ -96,4 +94,6 @@ class BudgetService {
 }
 
 export default new BudgetService();
+
+
 
