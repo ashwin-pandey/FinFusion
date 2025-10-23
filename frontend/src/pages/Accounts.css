@@ -362,9 +362,23 @@
 /* Accounts Grid */
 .accounts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 30px;
+  width: 100%;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .accounts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .empty-state {
@@ -413,9 +427,5 @@
   .filters-section {
     flex-direction: column;
     gap: 16px;
-  }
-  
-  .accounts-grid {
-    grid-template-columns: 1fr;
   }
 }

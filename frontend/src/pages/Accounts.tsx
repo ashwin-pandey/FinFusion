@@ -331,8 +331,26 @@ const Accounts: React.FC = () => {
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.balance?.toString() || '0'}
-                    onChange={(_, data) => setFormData({ ...formData, balance: parseFloat(data.value) || 0 })}
+                    min="0"
+                    placeholder="0.00"
+                    value={formData.balance !== undefined ? formData.balance.toString() : ''}
+                    onChange={(_, data) => {
+                      const value = data.value;
+                      if (value === '' || value === null || value === undefined) {
+                        setFormData({ ...formData, balance: 0 });
+                      } else {
+                        const numValue = parseFloat(value);
+                        setFormData({ ...formData, balance: isNaN(numValue) ? 0 : numValue });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      // Format to 2 decimal places on blur
+                      const value = (e.target as HTMLInputElement).value;
+                      if (value && !isNaN(parseFloat(value))) {
+                        const formatted = parseFloat(value).toFixed(2);
+                        setFormData({ ...formData, balance: parseFloat(formatted) });
+                      }
+                    }}
                   />
                 </Field>
                 <Field label="Currency">

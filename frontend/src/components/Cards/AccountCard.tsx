@@ -1,4 +1,5 @@
 import React from 'react';
+import ClickableNumber from '../ClickableNumber';
 import './AccountCard.css';
 
 interface AccountCardProps {
@@ -37,7 +38,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
           <p className="account-type">{type.replace('_', ' ')}</p>
         </div>
         <div className="account-balance">
-          <h2 className="balance-amount">{formatCurrency(balance)}</h2>
+          <h2 className="balance-amount"><ClickableNumber value={balance} /></h2>
           <p className="balance-currency">{currency}</p>
         </div>
       </div>

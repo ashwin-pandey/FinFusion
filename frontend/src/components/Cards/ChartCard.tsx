@@ -11,7 +11,7 @@ import {
 
 const useStyles = makeStyles({
   card: {
-    height: '400px',
+    height: 'auto',
     transition: 'all 0.2s ease',
     '&:hover': {
       transform: 'translateY(-2px)',

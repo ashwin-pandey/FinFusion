@@ -209,16 +209,16 @@ const Profile: React.FC = () => {
               <label><Text weight="semibold">Default Currency</Text></label>
               <div className="currency-options">
                 {CURRENCIES.map((curr) => (
-                  <Button
+                  <div
                     key={curr.code}
-                    appearance={curr.code === currency.code ? "primary" : "secondary"}
-                    onClick={() => handleCurrencyChange(curr)}
                     className="currency-option"
+                    data-appearance={curr.code === currency.code ? "primary" : "secondary"}
+                    onClick={() => handleCurrencyChange(curr)}
                   >
                     <span className="currency-symbol">{curr.symbol}</span>
                     <span className="currency-code">{curr.code}</span>
                     <span className="currency-name">{curr.name}</span>
-                  </Button>
+                  </div>
                 ))}
               </div>
             </div>

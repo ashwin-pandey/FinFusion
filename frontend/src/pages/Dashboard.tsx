@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useBudgets } from '../hooks/useBudgets';
+import { useAccounts } from '../hooks/useAccounts';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { formatPercentage, formatDate } from '../utils/formatters';
 import { getDateRangeForPeriod, toISODateString } from '../utils/dateHelpers';
@@ -127,6 +128,7 @@ const Dashboard: React.FC = () => {
   const styles = useStyles();
   const { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown, isLoading, fetchDashboard, fetchTrends, fetchBreakdown } = useAnalytics();
   const { budgets, fetchBudgets } = useBudgets(true, false);
+  const { summary: accountSummary, fetchAccountSummary } = useAccounts(false);
   const { formatCurrency } = useCurrency();
   const [period, setPeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'last_90_days' | 'all_time'>('this_month');
 
@@ -142,7 +144,8 @@ const Dashboard: React.FC = () => {
         fetchTrends(), // No parameters for all time
         fetchBreakdown('INCOME'),
         fetchBreakdown('EXPENSE'),
-        fetchBudgets(true)
+        fetchBudgets(true),
+        fetchAccountSummary()
       ]);
     } else {
       const { startDate, endDate } = getDateRangeForPeriod(period);
@@ -154,7 +157,8 @@ const Dashboard: React.FC = () => {
         fetchTrends(start, end, 'month'),
         fetchBreakdown('INCOME', start, end),
         fetchBreakdown('EXPENSE', start, end),
-        fetchBudgets(true)
+        fetchBudgets(true),
+        fetchAccountSummary()
       ]);
     }
   };
@@ -191,6 +195,14 @@ const Dashboard: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="stats-grid">
+        <StatCard
+          icon="🏦"
+          iconColor="#e3f2fd"
+          value={<ClickableNumber value={accountSummary?.totalBalance || 0} />}
+          label="Total Balance"
+          subtitle="across all accounts"
+        />
+        
         <StatCard
           icon="💰"
           iconColor="#e8f5e9"

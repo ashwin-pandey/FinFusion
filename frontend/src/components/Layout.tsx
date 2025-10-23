@@ -122,6 +122,9 @@ const useStyles = makeStyles({
     backdropFilter: 'blur(10px)',
     transition: 'all 0.2s ease',
     marginRight: '10px',
+    marginTop: '10px',
+    marginLeft: '10px',
+    zIndex: 1000,
     '&:hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.25)',
       transform: 'scale(1.05)',
@@ -253,40 +256,77 @@ const useStyles = makeStyles({
   userInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: tokens.spacingHorizontalM,
+    gap: '12px',
     marginBottom: tokens.spacingVerticalM,
-    ...shorthands.padding(tokens.spacingVerticalM),
-    borderRadius: '12px',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    backdropFilter: 'blur(10px)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-    transition: 'all 0.3s ease',
+    ...shorthands.padding('16px'),
+    borderRadius: '16px',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    color: 'black',
+    position: 'relative',
+    overflow: 'hidden',
+    marginLeft: '10px',
+    marginRight: '10px',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)'
+    },
     '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-      transform: 'translateY(-1px)',
-      boxShadow: '0 6px 16px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+      border: '1px solid rgba(255, 255, 255, 0.35)'
     }
   },
   userDetails: {
     flex: 1,
-    minWidth: 0
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingLeft: '8px',
+    gap: '2px'
   },
   userName: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: 'white',
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#1a1a1a',
     margin: 0,
-    marginBottom: '4px',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-    letterSpacing: '0.3px'
+    lineHeight: '1.2',
+    textShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    letterSpacing: '0.5px',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    maxWidth: '100%'
   },
   userEmail: {
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: '12px',
+    color: '#666666',
     margin: 0,
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
-    letterSpacing: '0.2px'
+    lineHeight: '1.3',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    letterSpacing: '0.3px',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    maxWidth: '100%',
+    opacity: 0.9
+  },
+  footerActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    width: '100%'
   },
   mainContent: {
     flex: 1,
@@ -331,13 +371,9 @@ const Layout: React.FC = () => {
             <div className={styles.logoIcon}>💰</div>
             {isSidebarOpen && <Text className={styles.logoText}>FinFusion</Text>}
           </div>
-          <Button
-            appearance="transparent"
-            icon={isSidebarOpen ? <ChevronLeft24Regular /> : <ChevronRight24Regular />}
-            className={styles.toggleButton}
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          />
         </div>
+
+        <hr style={{ margin: '5px 0' }} />
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
@@ -367,8 +403,8 @@ const Layout: React.FC = () => {
           ))}
         </nav>
 
-        {isSidebarOpen && (
-          <div className={styles.sidebarFooter}>
+        <div className={styles.sidebarFooter}>
+          {isSidebarOpen && (
             <div className={styles.userInfo}>
               <Avatar
                 name={user?.name}
@@ -380,16 +416,42 @@ const Layout: React.FC = () => {
                 <Text className={styles.userEmail}>{user?.email}</Text>
               </div>
             </div>
+          )}
+          
+          <div className={styles.footerActions}>
             <Button
-              appearance="secondary"
-              icon={<SignOut24Regular />}
-              onClick={handleLogout}
-              style={{ width: '100%' }}
+              appearance="transparent"
+              icon={isSidebarOpen ? <ChevronLeft24Regular /> : <ChevronRight24Regular />}
+              className={styles.toggleButton}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{ 
+                width: isSidebarOpen ? 'auto' : '100%',
+                marginBottom: isSidebarOpen ? '8px' : '0'
+              }}
             >
-              Logout
+              {isSidebarOpen && 'Collapse'}
+            </Button>
+            
+            <Button
+              appearance="transparent"
+              className={styles.navItem}
+              onClick={handleLogout}
+              style={{ 
+                width: '100%', 
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                backgroundColor: 'transparent',
+                color: 'inherit',
+                marginLeft: '10px !important',
+                marginRight: '10px !important',
+                marginBottom: '10px !important'
+              }}
+            >
+              <span className={styles.navIcon}><SignOut24Regular /></span>
+              {isSidebarOpen && <Text className={styles.navLabel}>Logout</Text>}
             </Button>
           </div>
-        )}
+        </div>
       </aside>
 
       <main className={styles.mainContent}>

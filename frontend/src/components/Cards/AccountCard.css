@@ -4,9 +4,12 @@
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
-  height: 100%;
+  height: auto;
+  min-height: 150px;
   display: flex;
   flex-direction: column;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .account-card:hover {
@@ -78,6 +81,7 @@
 
 .action-btn {
   padding: 8px 16px;
+  margin-right: 0px;
   border: none;
   border-radius: 6px;
   font-size: 14px;
