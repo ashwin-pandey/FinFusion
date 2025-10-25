@@ -1,5 +1,6 @@
 import { AccountModel, CreateAccountData, UpdateAccountData, AccountFilters } from '../models/Account';
 import { UserModel } from '../models/User';
+import { TransactionModel } from '../models/Transaction';
 
 export interface AccountListResult {
   accounts: any[];
@@ -19,7 +20,58 @@ export class AccountService {
       throw new Error('User not found');
     }
 
-    return await AccountModel.create(data);
+    // Create the account first
+    const account = await AccountModel.create(data);
+
+    // If there's an initial balance, create an opening balance transaction
+    if (data.balance && data.balance !== 0) {
+      try {
+        // Find or create a system category for opening balances
+        const openingBalanceCategory = await this.getOrCreateOpeningBalanceCategory(data.userId);
+        
+        // Create opening balance transaction
+        await TransactionModel.create({
+          userId: data.userId,
+          amount: Math.abs(data.balance), // Always positive amount
+          type: 'OPENING_BALANCE',
+          categoryId: openingBalanceCategory.id,
+          accountId: account.id,
+          date: new Date(),
+          description: `Opening balance for ${account.name}`,
+          isOpeningBalance: true,
+          isRecurring: false
+        });
+
+        console.log(`Created opening balance transaction for account ${account.name} with amount ${data.balance}`);
+      } catch (error) {
+        console.error('Error creating opening balance transaction:', error);
+        // Don't fail account creation if opening balance transaction fails
+      }
+    }
+
+    return account;
+  }
+
+  private static async getOrCreateOpeningBalanceCategory(userId: string): Promise<any> {
+    // This is a simplified approach - in a real app, you might want to create
+    // a proper system category for opening balances
+    // For now, we'll use a generic approach
+    const { CategoryModel } = await import('../models/Category');
+    
+    // Try to find an existing opening balance category
+    let category = await CategoryModel.findByName('Opening Balance', userId);
+    
+    if (!category) {
+      // Create a system category for opening balances
+      category = await CategoryModel.create({
+        userId,
+        name: 'Opening Balance',
+        type: 'INCOME', // Opening balances are treated as income for categorization
+        isSystem: true
+      });
+    }
+    
+    return category;
   }
 
   static async getAccount(id: string, userId: string): Promise<any> {
@@ -123,5 +175,51 @@ export class AccountService {
         loan: loan.reduce((sum, acc) => sum + Number(acc.balance), 0)
       }
     };
+  }
+
+  /**
+   * Get credit account information (available credit, debt, etc.)
+   */
+  static async getCreditAccountInfo(accountId: string, userId: string, creditLimit?: number): Promise<any> {
+    const account = await AccountModel.findById(accountId, userId);
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    if (account.type !== 'CREDIT_CARD') {
+      throw new Error('Account is not a credit card');
+    }
+
+    const balance = parseFloat(account.balance.toString());
+    const debt = balance; // Positive balance = debt
+    const availableCredit = creditLimit ? creditLimit - debt : null;
+
+    return {
+      account,
+      debt,
+      availableCredit,
+      creditLimit,
+      creditUtilization: creditLimit ? (debt / creditLimit) * 100 : null
+    };
+  }
+
+  /**
+   * Update credit limit for a credit card
+   */
+  static async updateCreditLimit(accountId: string, userId: string, creditLimit: number): Promise<any> {
+    const account = await AccountModel.findById(accountId, userId);
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    if (account.type !== 'CREDIT_CARD') {
+      throw new Error('Account is not a credit card');
+    }
+
+    // Store credit limit in account metadata or separate table
+    // For now, we'll add it as a note in the account name or description
+    return await AccountModel.update(accountId, {
+      name: `${account.name} (Limit: ${creditLimit})`
+    });
   }
 }
