@@ -51,17 +51,43 @@ export const formatPercentage = (value: number, decimals: number = 1): string =>
   return `${formatNumber(value, decimals)}%`;
 };
 
-// Compact number formatter (1K, 1M, etc.)
+// Compact number formatter (1K, 1L, etc.)
 export const formatCompactNumber = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-  }).format(value);
+  const absValue = Math.abs(value);
+  
+  if (absValue >= 100000) {
+    // Use L for lakhs (100,000+)
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short',
+    }).format(value);
+  } else if (absValue >= 1000) {
+    // Use K for thousands (1,000+)
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short',
+    }).format(value);
+  }
+  
+  return value.toLocaleString();
 };
 
 // Compact currency formatter with click-to-expand functionality
 export const formatCompactCurrency = (amount: number, currency: string = 'USD'): string => {
-  if (Math.abs(amount) >= 10000) {
+  const absAmount = Math.abs(amount);
+  
+  if (absAmount >= 100000) {
+    // Use L for lakhs (100,000+)
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      compactDisplay: 'short',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(amount);
+  } else if (absAmount >= 1000) {
+    // Use K for thousands (1,000+)
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -82,7 +108,7 @@ export const formatCompactCurrency = (amount: number, currency: string = 'USD'):
 
 // Check if a number should be displayed in compact format
 export const shouldUseCompactFormat = (value: number): boolean => {
-  return Math.abs(value) >= 10000;
+  return Math.abs(value) >= 1000;
 };
 
 // Format file size

@@ -15,7 +15,7 @@ const ClickableNumber: React.FC<ClickableNumberProps> = ({
   className,
   style,
   showCurrency = true,
-  compactThreshold = 10000
+  compactThreshold = 1000
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { currency } = useCurrency();
