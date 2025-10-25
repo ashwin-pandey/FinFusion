@@ -11,7 +11,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "db:setup": "node scripts/setup-database.js"
+    "db:setup": "node scripts/setup-database.js",
+    "cron:start": "node src/cron/setup.js",
+    "cron:process": "ts-node -e \"import('./src/services/CronService').then(m => m.CronService.processRecurringTransactions())\""
   },
   "keywords": [],
   "author": "",
@@ -30,6 +32,7 @@
     "jsonwebtoken": "^9.0.2",
     "logify-node-sdk": "^0.0.2",
     "morgan": "^1.10.0",
+    "node-cron": "^4.2.1",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
     "prisma": "^4.16.2",
