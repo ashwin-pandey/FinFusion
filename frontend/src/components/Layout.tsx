@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import CurrencySwitcher from './CurrencySwitcher';
+import TopBar from './TopBar';
 import {
   Button,
   Text,
@@ -13,16 +14,13 @@ import {
   mergeClasses
 } from '@fluentui/react-components';
 import {
-  ChevronLeft24Regular,
-  ChevronRight24Regular,
   Board24Regular,
   Payment24Regular,
   Money24Regular,
   ChartMultiple24Regular,
   Folder24Regular,
   BuildingBank24Regular,
-  Person24Regular,
-  SignOut24Regular
+  Person24Regular
 } from '@fluentui/react-icons';
 import './Layout.css';
 
@@ -42,6 +40,8 @@ const useStyles = makeStyles({
     boxShadow: '4px 0 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05)',
     color: 'black',
     position: 'relative',
+    marginTop: '60px',
+    paddingTop: '15px',
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -257,7 +257,7 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginBottom: tokens.spacingVerticalM,
+    // marginBottom: tokens.spacingVerticalM,
     ...shorthands.padding('16px'),
     borderRadius: '16px',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -270,6 +270,7 @@ const useStyles = makeStyles({
     overflow: 'hidden',
     marginLeft: '10px',
     marginRight: '10px',
+    marginBottom: '10px',
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -331,6 +332,7 @@ const useStyles = makeStyles({
   mainContent: {
     flex: 1,
     overflow: 'auto',
+    marginTop: '60px',
     backgroundColor: tokens.colorNeutralBackground1,
     ...shorthands.padding(tokens.spacingVerticalL, tokens.spacingHorizontalL)
   }
@@ -338,15 +340,11 @@ const useStyles = makeStyles({
 
 const Layout: React.FC = () => {
   const styles = useStyles();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -362,18 +360,12 @@ const Layout: React.FC = () => {
 
   return (
     <div className={styles.layout}>
+      <TopBar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      
       <aside className={mergeClasses(
         styles.sidebar,
         isSidebarOpen ? styles.sidebarOpen : styles.sidebarClosed
       )}>
-        <div className={styles.sidebarHeader}>
-          <div className={styles.logo}>
-            <div className={styles.logoIcon}>💰</div>
-            {isSidebarOpen && <Text className={styles.logoText}>FinFusion</Text>}
-          </div>
-        </div>
-
-        <hr style={{ margin: '5px 0' }} />
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
@@ -418,39 +410,6 @@ const Layout: React.FC = () => {
             </div>
           )}
           
-          <div className={styles.footerActions}>
-            <Button
-              appearance="transparent"
-              icon={isSidebarOpen ? <ChevronLeft24Regular /> : <ChevronRight24Regular />}
-              className={styles.toggleButton}
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              style={{ 
-                width: isSidebarOpen ? 'auto' : '100%',
-                marginBottom: isSidebarOpen ? '8px' : '0'
-              }}
-            >
-              {isSidebarOpen && 'Collapse'}
-            </Button>
-            
-            <Button
-              appearance="transparent"
-              className={styles.navItem}
-              onClick={handleLogout}
-              style={{ 
-                width: '100%', 
-                justifyContent: 'flex-start',
-                textAlign: 'left',
-                backgroundColor: 'transparent',
-                color: 'inherit',
-                marginLeft: '10px !important',
-                marginRight: '10px !important',
-                marginBottom: '10px !important'
-              }}
-            >
-              <span className={styles.navIcon}><SignOut24Regular /></span>
-              {isSidebarOpen && <Text className={styles.navLabel}>Logout</Text>}
-            </Button>
-          </div>
         </div>
       </aside>
 
