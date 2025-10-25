@@ -361,8 +361,8 @@ const Transactions: React.FC = () => {
               <div className="balance-icon">💰</div>
               <div className="balance-info">
                 <h2><ClickableNumber value={transactions.reduce((sum: number, t: Transaction) => {
-                  // Exclude opening balance transactions from net balance calculation
-                  if (t.isOpeningBalance) return sum;
+                  // Exclude opening balance and transfer transactions from net balance calculation
+                  if (t.isOpeningBalance || t.type === 'TRANSFER') return sum;
                   return sum + (t.type === 'INCOME' ? Number(t.amount) : -Number(t.amount));
                 }, 0)} /></h2>
                 <p>Net Balance</p>
