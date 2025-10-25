@@ -3,7 +3,7 @@ import { useCategories } from '../hooks/useCategories';
 import { useAuth } from '../hooks/useAuth';
 import { Category } from '../types';
 import { Button, Text } from '@fluentui/react-components';
-import { Edit24Regular, Delete24Regular } from '@fluentui/react-icons';
+import { Edit24Regular, Delete24Regular, Add24Regular } from '@fluentui/react-icons';
 import './Categories.css';
 
 const Categories: React.FC = () => {
@@ -149,12 +149,12 @@ const Categories: React.FC = () => {
     <div className="categories-page">
       <div className="page-header">
         <h1>Categories</h1>
-        <Button 
-          appearance="primary" 
+        <button 
+          className="btn btn-primary"
           onClick={() => setShowModal(true)}
         >
-          + Add Category
-        </Button>
+          <Add24Regular /> Add Category
+        </button>
       </div>
 
       {/* Category Summary */}

@@ -187,6 +187,18 @@ export class CategoryModel {
     });
   }
 
+  static async findByName(name: string, userId?: string): Promise<Category | null> {
+    return await prisma.category.findFirst({
+      where: {
+        name,
+        OR: [
+          { userId },
+          { isSystem: true }
+        ]
+      }
+    });
+  }
+
   static async findByNameAndType(name: string, type: 'INCOME' | 'EXPENSE', userId?: string): Promise<Category | null> {
     return await prisma.category.findFirst({
       where: {
