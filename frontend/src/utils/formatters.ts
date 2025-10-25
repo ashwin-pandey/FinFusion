@@ -100,11 +100,14 @@ export const formatTransactionType = (type: 'INCOME' | 'EXPENSE'): string => {
 };
 
 // Format payment method
-export const formatPaymentMethod = (method: string): string => {
-  return method
-    .split('_')
-    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(' ');
+export const formatPaymentMethod = (method: string | { name: string }): string => {
+  if (typeof method === 'string') {
+    return method
+      .split('_')
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return method.name;
 };
 
 // Format period type
