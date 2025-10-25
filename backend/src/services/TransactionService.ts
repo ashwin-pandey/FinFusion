@@ -97,6 +97,11 @@ export class TransactionService {
           throw new Error('Account not found');
         }
         
+        // Prevent income transactions to credit cards (credit cards should only have expenses)
+        if (data.type === 'INCOME' && account.type === 'CREDIT_CARD') {
+          throw new Error('Cannot add income to a credit card. Credit cards should only have expenses (debt).');
+        }
+        
         // Check if user has sufficient balance for expense transactions
         // Credit cards allow negative balances (debt), other accounts don't
         if (data.type === 'EXPENSE' && account.balance < data.amount && account.type !== 'CREDIT_CARD') {
@@ -225,7 +230,8 @@ export class TransactionService {
   static async getSpendingTrends(
     userId: string,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    groupBy: 'month' | 'quarter' | 'year' = 'month'
   ): Promise<Array<{ period: string; income: number; expenses: number; netIncome: number }>> {
     // Default to last 6 months if no dates provided
     const defaultStartDate = startDate || new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
@@ -239,27 +245,69 @@ export class TransactionService {
 
     const { transactions } = await TransactionModel.findMany(filters, 1, 1000);
     
-    // Filter out opening balance transactions
-    const regularTransactions = transactions.filter(transaction => !transaction.isOpeningBalance);
+    // Debug: Log transaction amounts
+    console.log('Raw transactions from database:', transactions.map(t => ({
+      id: t.id,
+      amount: t.amount,
+      type: t.type,
+      date: t.date
+    })));
+    
+    // Debug: Count transaction types
+    const typeCounts = transactions.reduce((acc, t) => {
+      acc[t.type] = (acc[t.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log('Transaction type counts:', typeCounts);
+    
+    // Include all transactions (including opening balances as they represent initial income)
+    const regularTransactions = transactions;
 
-    // Group by month
-    const monthlyData: { [key: string]: { income: number; expenses: number } } = {};
+    // Group by selected period
+    const groupedData: { [key: string]: { income: number; expenses: number } } = {};
 
     regularTransactions.forEach(transaction => {
-      const monthKey = transaction.date.toISOString().substring(0, 7); // YYYY-MM
+      let periodKey: string;
+      const date = new Date(transaction.date);
       
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expenses: 0 };
+      switch (groupBy) {
+        case 'month':
+          periodKey = date.toISOString().substring(0, 7); // YYYY-MM
+          break;
+        case 'quarter':
+          const quarter = Math.floor(date.getMonth() / 3) + 1;
+          periodKey = `${date.getFullYear()}-Q${quarter}`; // YYYY-Q1
+          break;
+        case 'year':
+          periodKey = date.getFullYear().toString(); // YYYY
+          break;
+        default:
+          periodKey = date.toISOString().substring(0, 7); // Default to month
+      }
+      
+      if (!groupedData[periodKey]) {
+        groupedData[periodKey] = { income: 0, expenses: 0 };
       }
 
-      if (transaction.type === 'INCOME') {
-        monthlyData[monthKey].income += transaction.amount;
+      // Convert Decimal to number properly
+      const amount = Number(transaction.amount);
+
+      if (transaction.type === 'INCOME' || transaction.isOpeningBalance) {
+        groupedData[periodKey].income += amount;
+        console.log(`Added ${transaction.isOpeningBalance ? 'OPENING_BALANCE' : 'INCOME'}: ${amount} to ${periodKey}`);
+      } else if (transaction.type === 'EXPENSE') {
+        groupedData[periodKey].expenses += amount;
+        console.log(`Added EXPENSE: ${amount} to ${periodKey}`);
+      } else if (transaction.type === 'OPENING_BALANCE') {
+        groupedData[periodKey].income += amount;
+        console.log(`Added OPENING_BALANCE: ${amount} to ${periodKey}`);
       } else {
-        monthlyData[monthKey].expenses += transaction.amount;
+        console.log(`Skipped ${transaction.type}: ${amount} for ${periodKey}`);
       }
+      // Skip TRANSFER transactions for spending trends
     });
 
-    return Object.entries(monthlyData)
+    const result = Object.entries(groupedData)
       .map(([period, data]) => ({
         period,
         income: Number(Number(data.income || 0).toFixed(2)),
@@ -267,6 +315,11 @@ export class TransactionService {
         netIncome: Number((Number(data.income || 0) - Number(data.expenses || 0)).toFixed(2))
       }))
       .sort((a, b) => a.period.localeCompare(b.period));
+    
+    // Debug: Log final calculated amounts
+    console.log('Calculated monthly data:', result);
+    
+    return result;
   }
 
   static async importTransactions(

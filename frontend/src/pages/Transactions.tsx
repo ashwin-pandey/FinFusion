@@ -361,9 +361,9 @@ const Transactions: React.FC = () => {
               <div className="balance-icon">💰</div>
               <div className="balance-info">
                 <h2><ClickableNumber value={transactions.reduce((sum: number, t: Transaction) => {
-                  // Exclude opening balance and transfer transactions from net balance calculation
-                  if (t.isOpeningBalance || t.type === 'TRANSFER') return sum;
-                  return sum + (t.type === 'INCOME' ? Number(t.amount) : -Number(t.amount));
+                  // Include opening balances as income, exclude transfer transactions from net balance calculation
+                  if (t.type === 'TRANSFER') return sum;
+                  return sum + (t.type === 'INCOME' || t.type === 'OPENING_BALANCE' || t.isOpeningBalance ? Number(t.amount) : -Number(t.amount));
                 }, 0)} /></h2>
                 <p>Net Balance</p>
               </div>
@@ -496,8 +496,7 @@ const Transactions: React.FC = () => {
                       {transaction.isOpeningBalance ? 'Opening Balance' : transaction.type}
                     </span>
                   </td>
-                  <td className={`amount ${transaction.type.toLowerCase()}`}>
-                    {transaction.type === 'TRANSFER' ? '' : (transaction.type === 'INCOME' ? '+' : '-')}
+                  <td className={`transaction-amount ${transaction.type.toLowerCase()}`}>
                     <ClickableNumber value={transaction.amount} />
                   </td>
                   <td>{transaction.paymentMethod?.name || 'N/A'}</td>
@@ -561,7 +560,15 @@ const Transactions: React.FC = () => {
                       className="fluent-select"
                     >
                       <option value="EXPENSE">Expense</option>
-                      <option value="INCOME">Income</option>
+                      <option 
+                        value="INCOME" 
+                        disabled={(() => {
+                          const selectedAccount = accounts.find((acc: Account) => acc.id === formData.accountId);
+                          return selectedAccount?.type === 'CREDIT_CARD';
+                        })()}
+                      >
+                        Income
+                      </option>
                     </select>
                   </div>
                 )}
@@ -616,18 +623,27 @@ const Transactions: React.FC = () => {
                       const selectedAccountId = e.target.value;
                       const selectedAccount = accounts.find((acc: Account) => acc.id === selectedAccountId);
                       
-                      // Auto-set payment method based on account type
+                      // Auto-set payment method and type based on account type
                       let paymentMethodId = formData.paymentMethodId;
+                      let transactionType = formData.type;
+                      
                       if (selectedAccount?.type === 'CASH') {
                         // Find the Cash payment method
                         const cashPaymentMethod = paymentMethods.find(pm => pm.code === 'CASH');
                         paymentMethodId = cashPaymentMethod?.id || '';
+                      } else if (selectedAccount?.type === 'CREDIT_CARD') {
+                        // Find the Card payment method for credit cards
+                        const cardPaymentMethod = paymentMethods.find(pm => pm.code === 'CARD');
+                        paymentMethodId = cardPaymentMethod?.id || '';
+                        // Auto-set type to EXPENSE for credit cards
+                        transactionType = 'EXPENSE';
                       }
                       
                       setFormData({ 
                         ...formData, 
                         accountId: selectedAccountId,
-                        paymentMethodId: paymentMethodId
+                        paymentMethodId: paymentMethodId,
+                        type: transactionType as 'INCOME' | 'EXPENSE' | 'TRANSFER'
                       });
                     }}
                     className="fluent-select"

@@ -192,6 +192,10 @@
   color: #F44336;
 }
 
+.transaction-amount.opening_balance {
+  color: #4CAF50;
+}
+
 .transaction-category {
   display: flex;
   align-items: center;
