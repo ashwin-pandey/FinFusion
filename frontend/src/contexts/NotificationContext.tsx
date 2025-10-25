@@ -58,22 +58,24 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     setToasts(prev => [...prev, newToast]);
 
+    // DISABLED: Database saving temporarily disabled
     // Also save to database for persistence
-    if (user?.id) {
-      console.log('Creating notification:', { userId: user.id, title, message, type });
-      notificationService.createNotification({
-        userId: user.id,
-        title,
-        message,
-        type
-      }).then(() => {
-        console.log('Notification saved to database successfully');
-      }).catch((err: any) => {
-        console.error('Failed to save notification to database:', err);
-        console.error('Error response:', err.response);
-        console.error('Error response data:', err.response?.data);
-      });
-    }
+    // if (user?.id) {
+    //   console.log('Creating notification:', { userId: user.id, title, message, type });
+    //   notificationService.createNotification({
+    //     userId: user.id,
+    //     title,
+    //     message,
+    //     type
+    //   }).then(() => {
+    //     console.log('Notification saved to database successfully');
+    //   }).catch((err: any) => {
+    //     console.error('Failed to save notification to database:', err);
+    //     console.error('Error response:', err.response);
+    //     console.error('Error response data:', err.response?.data);
+    //   });
+    // }
+    console.log('Database notification saving is temporarily disabled');
   }, [user]);
 
   const showSuccess = useCallback((title: string, message: string, duration?: number) => {
