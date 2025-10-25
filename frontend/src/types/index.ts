@@ -2,8 +2,10 @@
 export interface User {
   id: string;
   email: string;
+  username?: string;
   name: string;
   profilePicture?: string;
+  role?: string;
   createdAt: string;
 }
 
@@ -35,8 +37,16 @@ export interface Category {
 }
 
 // Transaction Types
-export type TransactionType = 'INCOME' | 'EXPENSE';
-export type PaymentMethod = 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+export type TransactionType = 'INCOME' | 'EXPENSE' | 'OPENING_BALANCE' | 'TRANSFER';
+export interface PaymentMethod {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
 
 export interface Transaction {
@@ -46,11 +56,14 @@ export interface Transaction {
   type: TransactionType;
   categoryId: string;
   accountId?: string;
+  toAccountId?: string; // For transfers - destination account
   date: string;
   description?: string;
+  paymentMethodId?: string;
   paymentMethod?: PaymentMethod;
   isRecurring: boolean;
   recurringFrequency?: RecurringFrequency;
+  isOpeningBalance: boolean;
   createdAt: string;
   updatedAt: string;
   category?: {
@@ -67,6 +80,13 @@ export interface Transaction {
     balance: number;
     currency: string;
   };
+  toAccount?: {
+    id: string;
+    name: string;
+    type: 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'CASH' | 'INVESTMENT' | 'LOAN' | 'OTHER';
+    balance: number;
+    currency: string;
+  };
 }
 
 export interface TransactionFilters {
@@ -77,6 +97,27 @@ export interface TransactionFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+}
+
+// Notification Types
+export type NotificationType = 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationFilters {
+  page?: number;
+  limit?: number;
+  isRead?: boolean;
+  type?: NotificationType;
 }
 
 // Budget Types
