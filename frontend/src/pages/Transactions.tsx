@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useAccounts } from '../hooks/useAccounts';
+import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useNotification } from '../contexts/NotificationContext';
 import ClickableNumber from '../components/ClickableNumber';
 import { Account } from '../services/accountService';
 import { formatDate, formatPaymentMethod } from '../utils/formatters';
@@ -54,27 +56,32 @@ const Transactions: React.FC = () => {
   const { transactions, pagination, filters, isLoading, fetchTransactions, createTransaction, updateTransaction, deleteTransaction, setFilters } = useTransactions(false);
   const { categories, fetchCategories, error: categoriesError } = useCategories(undefined, false);
   const { accounts, fetchAccounts, error: accountsError } = useAccounts(false);
+  const { paymentMethods, fetchPaymentMethods } = usePaymentMethods();
   const { formatCurrency } = useCurrency();
+  const { showSuccess, showError, showWarning } = useNotification();
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  const [isTransferMode, setIsTransferMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     amount: '',
-    type: 'EXPENSE' as 'INCOME' | 'EXPENSE',
+    type: 'EXPENSE' as 'INCOME' | 'EXPENSE' | 'TRANSFER',
     categoryId: '',
     accountId: '',
+    toAccountId: '',
     date: new Date().toISOString().split('T')[0],
     description: '',
-    paymentMethod: 'CASH' as any,
+    paymentMethodId: '',
   });
 
   useEffect(() => {
     fetchTransactions();
     fetchCategories();
     fetchAccounts();
+    fetchPaymentMethods();
   }, []);
 
   const handleRefreshData = async () => {
@@ -95,17 +102,32 @@ const Transactions: React.FC = () => {
     
     // Validate form data
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      alert('Please enter a valid amount');
+      showError('Validation Error', 'Please enter a valid amount');
       return;
     }
     
-    if (!formData.categoryId) {
-      alert('Please select a category');
+    if (!isTransferMode && !formData.categoryId) {
+      showError('Validation Error', 'Please select a category');
       return;
     }
     
     if (!formData.date) {
-      alert('Please select a date');
+      showError('Validation Error', 'Please select a date');
+      return;
+    }
+    
+    if (!formData.accountId) {
+      showError('Validation Error', 'Please select an account');
+      return;
+    }
+    
+    if (isTransferMode && !formData.toAccountId) {
+      showError('Validation Error', 'Please select a destination account');
+      return;
+    }
+    
+    if (isTransferMode && formData.accountId === formData.toAccountId) {
+      showError('Validation Error', 'Cannot transfer to the same account');
       return;
     }
     
@@ -117,44 +139,115 @@ const Transactions: React.FC = () => {
         await updateTransaction(editingTransaction.id, {
           ...formData,
           amount: parseFloat(formData.amount),
+          type: formData.type as 'INCOME' | 'EXPENSE', // Only allow INCOME/EXPENSE for editing
         });
       } else {
         console.log('Creating new transaction');
-        await createTransaction({
-          ...formData,
+        const transactionData: any = {
           amount: parseFloat(formData.amount),
-        });
+          type: isTransferMode ? 'TRANSFER' : formData.type,
+          date: formData.date,
+          description: formData.description,
+          paymentMethodId: formData.paymentMethodId,
+        };
+        
+        if (isTransferMode) {
+          // For transfers, include accountId and toAccountId, exclude categoryId (backend will auto-assign Transfer category)
+          transactionData.accountId = formData.accountId;
+          transactionData.toAccountId = formData.toAccountId;
+        } else {
+          // For regular transactions, include categoryId and accountId
+          transactionData.categoryId = formData.categoryId;
+          transactionData.accountId = formData.accountId;
+        }
+        
+        await createTransaction(transactionData);
       }
       resetForm();
+      showSuccess('Transaction Saved', editingTransaction ? 'Transaction updated successfully!' : 'Transaction created successfully!');
       // Don't call fetchTransactions() - the Redux action already updates the state
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save transaction:', error);
-      alert('Failed to save transaction. Please try again.');
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      
+      // Extract error message from different possible error structures
+      let errorMessage = 'Failed to save transaction. Please try again.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+        // Handle validation errors
+        errorMessage = error.response.data.details.map((detail: any) => detail.msg).join(', ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      console.log('Final error message:', errorMessage);
+      
+      // Handle specific error messages
+      if (errorMessage.includes('Insufficient funds')) {
+        showError('Insufficient Funds', errorMessage);
+      } else if (errorMessage.includes('Account not found')) {
+        showError('Account Error', 'Account not found. Please select a valid account.');
+      } else if (errorMessage.includes('Category not found')) {
+        showError('Category Error', 'Category not found. Please select a valid category.');
+      } else {
+        showError('Transaction Error', errorMessage);
+      }
     }
   };
 
   const handleEdit = (transaction: Transaction) => {
+    // Don't allow editing of opening balance transactions
+    if (transaction.isOpeningBalance) {
+      showWarning('Cannot Edit', 'Opening balance transactions cannot be edited.');
+      return;
+    }
+    
+    // Don't allow editing of transfer transactions
+    if (transaction.type === 'TRANSFER') {
+      showWarning('Cannot Edit', 'Transfer transactions cannot be edited. Please delete and recreate if needed.');
+      return;
+    }
+    
     setEditingTransaction(transaction);
     setFormData({
       amount: transaction.amount.toString(),
-      type: transaction.type,
+      type: transaction.type as 'INCOME' | 'EXPENSE', // Type assertion since we've filtered out opening balance and transfers
       categoryId: transaction.categoryId,
       accountId: transaction.accountId || '',
+      toAccountId: transaction.toAccountId || '',
       date: new Date(transaction.date).toISOString().split('T')[0],
       description: transaction.description || '',
-      paymentMethod: transaction.paymentMethod || 'CASH',
+      paymentMethodId: transaction.paymentMethodId || '',
     });
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, transaction: Transaction) => {
+    // Don't allow deletion of opening balance transactions
+    if (transaction.isOpeningBalance) {
+      showWarning('Cannot Delete', 'Opening balance transactions cannot be deleted.');
+      return;
+    }
+    
+    // Don't allow deletion of transfer transactions
+    if (transaction.type === 'TRANSFER') {
+      showWarning('Cannot Delete', 'Transfer transactions cannot be deleted. Please create reverse transfers if needed.');
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       try {
         await deleteTransaction(id);
+        showSuccess('Transaction Deleted', 'Transaction deleted successfully!');
         // Don't call fetchTransactions() - the Redux action already updates the state
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to delete transaction:', error);
-        alert('Failed to delete transaction. Please try again.');
+        showError('Delete Error', `Failed to delete transaction: ${error.message || 'Please try again.'}`);
       }
     }
   };
@@ -162,14 +255,16 @@ const Transactions: React.FC = () => {
   const resetForm = () => {
     setShowModal(false);
     setEditingTransaction(null);
+    setIsTransferMode(false);
     setFormData({
       amount: '',
       type: 'EXPENSE',
       categoryId: '',
       accountId: '',
+      toAccountId: '',
       date: new Date().toISOString().split('T')[0],
       description: '',
-      paymentMethod: 'CASH',
+      paymentMethodId: '',
     });
   };
 
@@ -202,7 +297,7 @@ const Transactions: React.FC = () => {
     setImporting(true);
     try {
       const result = await transactionService.importTransactions(importFile);
-      alert(`Import successful! Imported: ${result.imported}, Failed: ${result.failed}`);
+      showSuccess('Import Complete', `Import successful! Imported: ${result.imported}, Failed: ${result.failed}`);
       setShowImportModal(false);
       setImportFile(null);
       if (fileInputRef.current) {
@@ -210,7 +305,7 @@ const Transactions: React.FC = () => {
       }
       fetchTransactions();
     } catch (error: any) {
-      alert(`Import failed: ${error.message}`);
+      showError('Import Failed', `Import failed: ${error.message || 'Please check your file format and try again.'}`);
     } finally {
       setImporting(false);
     }
@@ -233,30 +328,53 @@ const Transactions: React.FC = () => {
           <button className="action-btn edit-btn" onClick={handleImportClick}>
             <ArrowUpload24Regular /> Import CSV
           </button>
-          <button className="action-btn edit-btn" onClick={() => setShowModal(true)}>
+          <button className="action-btn edit-btn" onClick={() => {
+            setIsTransferMode(false);
+            setShowModal(true);
+          }}>
             <Add24Regular /> Add Transaction
+          </button>
+          <button className="action-btn edit-btn" onClick={() => {
+            setIsTransferMode(true);
+            setFormData({
+              amount: '',
+              type: 'TRANSFER',
+              categoryId: '',
+              accountId: '',
+              toAccountId: '',
+              date: new Date().toISOString().split('T')[0],
+              description: '',
+              paymentMethodId: '',
+            });
+            setShowModal(true);
+          }}>
+            <ArrowClockwise24Regular /> Transfer Money
           </button>
         </div>
       </div>
 
       {/* Transaction Summary */}
-      {transactions.length > 0 && (
+      {/* {transactions.length > 0 && ( */}
         <div className="summary-card">
           <div className="summary-content">
             <div className="total-balance">
               <div className="balance-icon">💰</div>
               <div className="balance-info">
-                <h2><ClickableNumber value={transactions.reduce((sum: number, t: Transaction) => sum + (t.type === 'INCOME' ? t.amount : -t.amount), 0)} /></h2>
+                <h2><ClickableNumber value={transactions.reduce((sum: number, t: Transaction) => {
+                  // Exclude opening balance transactions from net balance calculation
+                  if (t.isOpeningBalance) return sum;
+                  return sum + (t.type === 'INCOME' ? Number(t.amount) : -Number(t.amount));
+                }, 0)} /></h2>
                 <p>Net Balance</p>
               </div>
             </div>
             <div className="summary-stats">
               <div className="stat-item">
-                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'INCOME').length}</span>
+                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'INCOME' && !t.isOpeningBalance).length}</span>
                 <span className="stat-label">Income</span>
               </div>
               <div className="stat-item">
-                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'EXPENSE').length}</span>
+                <span className="stat-number">{transactions.filter((t: Transaction) => t.type === 'EXPENSE' && !t.isOpeningBalance).length}</span>
                 <span className="stat-label">Expenses</span>
               </div>
               <div className="stat-item">
@@ -266,7 +384,7 @@ const Transactions: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      {/* )} */}
 
       {/* Filters */}
       <div className="filters-section">
@@ -280,6 +398,7 @@ const Transactions: React.FC = () => {
             <option value="">All Types</option>
             <option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option>
+            <option value="TRANSFER">Transfer</option>
           </select>
         </div>
 
@@ -329,15 +448,19 @@ const Transactions: React.FC = () => {
                 <th>Date</th>
                 <th>Category</th>
                 <th>Account</th>
+                <th>To Account</th>
                 <th>Description</th>
                 <th>Type</th>
                 <th>Amount</th>
                 <th>Payment</th>
+                <th>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction: Transaction) => (
+              {[...transactions]
+                .sort((a: Transaction, b: Transaction) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .map((transaction: Transaction) => (
                 <tr key={transaction.id}>
                   <td>{formatDate(transaction.date)}</td>
                   <td>
@@ -350,27 +473,41 @@ const Transactions: React.FC = () => {
                       <span className="account">
                         {transaction.account.name} ({transaction.account.type.replace('_', ' ')})
                       </span>
+                    ) : transaction.accountId ? (
+                      <span className="account-loading">Loading account...</span>
                     ) : (
                       <span className="no-account">No account</span>
                     )}
                   </td>
+                  <td>
+                    {transaction.toAccount ? (
+                      <span className="account">
+                        {transaction.toAccount.name} ({transaction.toAccount.type.replace('_', ' ')})
+                      </span>
+                    ) : transaction.toAccountId ? (
+                      <span className="account-loading">Loading account...</span>
+                    ) : (
+                      <span className="no-account">-</span>
+                    )}
+                  </td>
                   <td>{transaction.description || '-'}</td>
                   <td>
-                    <span className={`badge badge-${transaction.type.toLowerCase()}`}>
-                      {transaction.type}
+                    <span className={`badge badge-${transaction.isOpeningBalance ? 'opening-balance' : transaction.type.toLowerCase()}`}>
+                      {transaction.isOpeningBalance ? 'Opening Balance' : transaction.type}
                     </span>
                   </td>
                   <td className={`amount ${transaction.type.toLowerCase()}`}>
-                    {transaction.type === 'INCOME' ? '+' : '-'}
+                    {transaction.type === 'TRANSFER' ? '' : (transaction.type === 'INCOME' ? '+' : '-')}
                     <ClickableNumber value={transaction.amount} />
                   </td>
-                  <td>{formatPaymentMethod(transaction.paymentMethod || 'N/A')}</td>
+                  <td>{transaction.paymentMethod?.name || 'N/A'}</td>
+                  <td>{formatDate(transaction.createdAt, 'short')}</td>
                   <td>
                     <div className={styles.actionButtons}>
                       <button className="action-btn edit-btn" onClick={() => handleEdit(transaction)}>
                         <Edit24Regular /> Edit
                       </button>
-                      <button className="action-btn delete-btn" onClick={() => handleDelete(transaction.id)}>
+                      <button className="action-btn delete-btn" onClick={() => handleDelete(transaction.id, transaction)}>
                         <Delete24Regular /> Delete
                       </button>
                     </div>
@@ -410,22 +547,24 @@ const Transactions: React.FC = () => {
         <div className="modal-overlay" onClick={resetForm}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingTransaction ? 'Edit Transaction' : 'Add Transaction'}</h2>
+              <h2>{editingTransaction ? 'Edit Transaction' : (isTransferMode ? 'Transfer Money' : 'Add Transaction')}</h2>
               <button className="close-btn" onClick={resetForm}>×</button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-row">
-                <div className="form-group">
-                  <label><Text weight="semibold">Type</Text></label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any, categoryId: '' })}
-                    className="fluent-select"
-                  >
-                    <option value="EXPENSE">Expense</option>
-                    <option value="INCOME">Income</option>
-                  </select>
-                </div>
+                {!isTransferMode && (
+                  <div className="form-group">
+                    <label><Text weight="semibold">Type</Text></label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value as any, categoryId: '' })}
+                      className="fluent-select"
+                    >
+                      <option value="EXPENSE">Expense</option>
+                      <option value="INCOME">Income</option>
+                    </select>
+                  </div>
+                )}
                 <div className="form-group">
                   <label><Text weight="semibold">Amount</Text></label>
                   <Input
@@ -438,14 +577,15 @@ const Transactions: React.FC = () => {
               </div>
 
               <div className="form-row">
-                <div className="form-group">
-                  <label><Text weight="semibold">Category</Text></label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                    className="fluent-select"
-                    required
-                  >
+                {!isTransferMode && (
+                  <div className="form-group">
+                    <label><Text weight="semibold">Category</Text></label>
+                    <select
+                      value={formData.categoryId}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      className="fluent-select"
+                      required
+                    >
                     <option value="">Select category</option>
                     {filteredCategories.length > 0 ? (
                       filteredCategories.map((cat) => (
@@ -466,19 +606,37 @@ const Transactions: React.FC = () => {
                       </option>
                     )}
                   </select>
-                </div>
+                  </div>
+                )}
                 <div className="form-group">
-                  <label><Text weight="semibold">Account (Optional)</Text></label>
+                  <label><Text weight="semibold">Account *</Text></label>
                   <select
                     value={formData.accountId}
-                    onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                    onChange={(e) => {
+                      const selectedAccountId = e.target.value;
+                      const selectedAccount = accounts.find((acc: Account) => acc.id === selectedAccountId);
+                      
+                      // Auto-set payment method based on account type
+                      let paymentMethodId = formData.paymentMethodId;
+                      if (selectedAccount?.type === 'CASH') {
+                        // Find the Cash payment method
+                        const cashPaymentMethod = paymentMethods.find(pm => pm.code === 'CASH');
+                        paymentMethodId = cashPaymentMethod?.id || '';
+                      }
+                      
+                      setFormData({ 
+                        ...formData, 
+                        accountId: selectedAccountId,
+                        paymentMethodId: paymentMethodId
+                      });
+                    }}
                     className="fluent-select"
                   >
                     <option value="">No account</option>
                     {accounts.length > 0 ? (
                       accounts.map((account: Account) => (
                         <option key={account.id} value={account.id}>
-                          {account.name} ({account.type.replace('_', ' ')}) - <ClickableNumber value={account.balance} />
+                          {account.name} ({account.type.replace('_', ' ')})
                         </option>
                       ))
                     ) : (
@@ -488,6 +646,30 @@ const Transactions: React.FC = () => {
                     )}
                   </select>
                 </div>
+                {isTransferMode && (
+                  <div className="form-group">
+                    <label><Text weight="semibold">To Account *</Text></label>
+                    <select
+                      value={formData.toAccountId}
+                      onChange={(e) => setFormData({ ...formData, toAccountId: e.target.value })}
+                      className="fluent-select"
+                      required
+                    >
+                      <option value="">Select destination account</option>
+                      {accounts.length > 0 ? (
+                        accounts.map((account: Account) => (
+                          <option key={account.id} value={account.id}>
+                            {account.name} ({account.type.replace('_', ' ')})
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>
+                          {accountsError ? 'Error loading accounts' : 'Loading accounts...'}
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="form-row">
@@ -503,15 +685,16 @@ const Transactions: React.FC = () => {
                 <div className="form-group">
                   <label><Text weight="semibold">Payment Method</Text></label>
                   <select
-                    value={formData.paymentMethod}
-                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as any })}
+                    value={formData.paymentMethodId}
+                    onChange={(e) => setFormData({ ...formData, paymentMethodId: e.target.value })}
                     className="fluent-select"
                   >
-                    <option value="CASH">Cash</option>
-                    <option value="CARD">Card</option>
-                    <option value="BANK_TRANSFER">Bank Transfer</option>
-                    <option value="DIGITAL_WALLET">Digital Wallet</option>
-                    <option value="OTHER">Other</option>
+                    <option value="">Select Payment Method</option>
+                    {paymentMethods.map((method) => (
+                      <option key={method.id} value={method.id}>
+                        {method.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -527,7 +710,7 @@ const Transactions: React.FC = () => {
               </div>
 
               <div className={styles.formActions}>
-                <button className="action-btn edit-btn" type="button" onClick={resetForm}>
+                <button className="action-btn danger-btn" type="button" onClick={resetForm}>
                   Cancel
                 </button>
                 <button className="action-btn edit-btn" type="submit">
@@ -565,7 +748,7 @@ const Transactions: React.FC = () => {
                   <li><strong>Category</strong> - Category name</li>
                   <li><strong>Amount</strong> - Transaction amount (decimal)</li>
                   <li><strong>Description</strong> - (Optional) Transaction notes</li>
-                  <li><strong>Payment Method</strong> - (Optional) CASH, CARD, etc.</li>
+                  <li><strong>Payment Method</strong> - (Optional) CASH, CARD, UPI, etc.</li>
                 </ul>
                 <p className="note">
                   <strong>Note:</strong> Categories must exist in your account. Create them first if needed.

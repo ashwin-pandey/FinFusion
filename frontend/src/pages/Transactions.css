@@ -1,3 +1,6 @@
+/* Import shared summary styles */
+@import '../styles/summary.css';
+
 /* Transactions Page */
 .transactions-page {
   max-width: 1400px;
@@ -102,129 +105,7 @@
 }
 
 
-/* Summary Card */
-.summary-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 30px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  display: flex;
-  flex-direction: column;
-  height: auto;
-}
-
-.summary-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-.summary-card h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.summary-content {
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.total-balance {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 24px;
-  border-radius: 12px;
-  min-width: 300px;
-  flex: 1;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.balance-icon {
-  font-size: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.balance-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.total-balance h2 {
-  font-size: 32px;
-  font-weight: bold;
-  margin: 0 0 6px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  line-height: 1.2;
-}
-
-.total-balance p {
-  font-size: 14px;
-  margin: 0;
-  text-transform: uppercase;
-  font-weight: 600;
-  opacity: 0.9;
-  letter-spacing: 0.5px;
-}
-
-.summary-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  flex: 1;
-  min-width: 300px;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 20px 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 80px;
-}
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background: #fff;
-}
-
-.stat-number {
-  display: block;
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 6px;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
+/* Summary styles are now imported from shared styles */
 
 /* Filters */
 .filters-section {
@@ -590,4 +471,29 @@
   background: linear-gradient(135deg, #201f1e 0%, #0f0f0f 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(50, 49, 48, 0.4);
+}
+
+/* Badge styles */
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-income {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.badge-expense {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+}
+
+.badge-opening-balance {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  color: white;
 }

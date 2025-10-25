@@ -3,8 +3,10 @@ import { Transaction, TransactionFilters, ApiResponse, PaginatedResponse } from 
 
 export interface CreateTransactionData {
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   categoryId: string;
+  accountId?: string;
+  toAccountId?: string;
   date: string;
   description?: string;
   paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
@@ -12,7 +14,18 @@ export interface CreateTransactionData {
   recurringFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
 }
 
-export interface UpdateTransactionData extends Partial<CreateTransactionData> {}
+export interface UpdateTransactionData {
+  amount?: number;
+  type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+  categoryId?: string;
+  accountId?: string;
+  toAccountId?: string;
+  date?: string;
+  description?: string;
+  paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+  isRecurring?: boolean;
+  recurringFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+}
 
 class TransactionService {
   // Get all transactions with filters

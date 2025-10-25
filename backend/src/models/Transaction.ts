@@ -11,9 +11,10 @@ export interface Transaction {
   accountId?: string;
   date: Date;
   description?: string;
-  paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+  paymentMethodId?: string;
   isRecurring: boolean;
   recurringFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+  isOpeningBalance: boolean;
   createdAt: Date;
   updatedAt: Date;
   category?: {
@@ -35,26 +36,30 @@ export interface Transaction {
 export interface CreateTransactionData {
   userId: string;
   amount: number;
-  type: 'INCOME' | 'EXPENSE';
+  type: 'INCOME' | 'EXPENSE' | 'OPENING_BALANCE' | 'TRANSFER';
   categoryId: string;
   accountId?: string;
+  toAccountId?: string;
   date: Date;
   description?: string;
-  paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+  paymentMethodId?: string;
   isRecurring?: boolean;
   recurringFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+  isOpeningBalance?: boolean;
 }
 
 export interface UpdateTransactionData {
   amount?: number;
-  type?: 'INCOME' | 'EXPENSE';
+  type?: 'INCOME' | 'EXPENSE' | 'OPENING_BALANCE' | 'TRANSFER';
   categoryId?: string;
   accountId?: string;
+  toAccountId?: string;
   date?: Date;
   description?: string;
-  paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+  paymentMethodId?: string;
   isRecurring?: boolean;
   recurringFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+  isOpeningBalance?: boolean;
 }
 
 export interface TransactionFilters {
@@ -64,7 +69,7 @@ export interface TransactionFilters {
   startDate?: Date;
   endDate?: Date;
   search?: string;
-  paymentMethod?: 'CASH' | 'CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET' | 'OTHER';
+  paymentMethodId?: string;
   isRecurring?: boolean;
 }
 
@@ -86,9 +91,10 @@ export class TransactionModel {
         type: data.type,
         categoryId: data.categoryId,
         accountId: data.accountId,
+        toAccountId: data.toAccountId,
         date: data.date,
         description: data.description,
-        paymentMethod: data.paymentMethod,
+        paymentMethodId: data.paymentMethodId,
         isRecurring: data.isRecurring || false,
         recurringFrequency: data.recurringFrequency
       },
@@ -130,6 +136,22 @@ export class TransactionModel {
             icon: true,
             color: true
           }
+        },
+        account: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            balance: true
+          }
+        },
+        toAccount: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            balance: true
+          }
         }
       }
     });
@@ -148,7 +170,7 @@ export class TransactionModel {
 
     if (filters.type) where.type = filters.type;
     if (filters.categoryId) where.categoryId = filters.categoryId;
-    if (filters.paymentMethod) where.paymentMethod = filters.paymentMethod;
+    if (filters.paymentMethodId) where.paymentMethodId = filters.paymentMethodId;
     if (filters.isRecurring !== undefined) where.isRecurring = filters.isRecurring;
 
     if (filters.startDate || filters.endDate) {
@@ -175,6 +197,22 @@ export class TransactionModel {
               type: true,
               icon: true,
               color: true
+            }
+          },
+          account: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              balance: true
+            }
+          },
+          toAccount: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              balance: true
             }
           }
         },
@@ -218,7 +256,8 @@ export class TransactionModel {
 
   static async getSummary(filters: TransactionFilters): Promise<TransactionSummary> {
     const where: any = {
-      userId: filters.userId
+      userId: filters.userId,
+      isOpeningBalance: false // Exclude opening balance transactions
     };
 
     if (filters.startDate || filters.endDate) {
@@ -260,7 +299,8 @@ export class TransactionModel {
   ): Promise<Array<{ categoryId: string; categoryName: string; amount: number; transactionCount: number }>> {
     const where: any = {
       userId,
-      type: 'EXPENSE'
+      type: 'EXPENSE',
+      isOpeningBalance: false // Exclude opening balance transactions
     };
 
     if (startDate || endDate) {
