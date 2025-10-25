@@ -5,7 +5,7 @@ import { useAccounts } from '../hooks/useAccounts';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { formatPercentage, formatDate } from '../utils/formatters';
 import { getDateRangeForPeriod, toISODateString } from '../utils/dateHelpers';
-import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Line } from 'recharts';
 import { getBudgetUtilizationColor, getTransactionTypeColor } from '../utils/chartHelpers';
 import StatCard from '../components/Cards/StatCard';
 import ChartCard from '../components/Cards/ChartCard';
@@ -424,7 +424,7 @@ const Dashboard: React.FC = () => {
             {trendsData.length > 0 ? (
               <div style={{ width: '100%', height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <ComposedChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis 
                       dataKey="period" 
@@ -464,23 +464,43 @@ const Dashboard: React.FC = () => {
                       }}
                     />
                     <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), '']}
+                      formatter={(value: number, name: string) => [formatCurrency(value), name]}
                       labelFormatter={(label) => {
-                        const date = new Date(label + '-01');
-                        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        // Handle different period formats
+                        if (label.includes('-Q')) {
+                          // Quarterly format: 2024-Q1
+                          const [year, quarter] = label.split('-Q');
+                          return `Q${quarter} ${year}`;
+                        } else if (label.match(/^\d{4}$/)) {
+                          // Yearly format: 2024
+                          return label;
+                        } else if (label.match(/^\d{4}-\d{2}$/)) {
+                          // Monthly format: 2024-01
+                          const date = new Date(label + '-01');
+                          return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                        } else {
+                          return label;
+                        }
                       }}
                       contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                     />
                     <Legend />
-                    <Area 
+                    <Bar 
+                      dataKey="netIncome" 
+                      fill="#2196F3" 
+                      name="💰 Net Income (Savings)" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Line 
                       type="monotone" 
                       dataKey="netIncome" 
-                      stroke="#2196F3" 
-                      fill="#2196F3" 
-                      fillOpacity={0.3}
-                      name="💰 Net Income (Savings)" 
+                      stroke="#FF6B35" 
+                      strokeWidth={3}
+                      dot={{ fill: '#FF6B35', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#FF6B35', strokeWidth: 2 }}
+                      name="📈 Savings Trend"
                     />
-                  </AreaChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             ) : (
