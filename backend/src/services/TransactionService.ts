@@ -30,34 +30,83 @@ export interface TransactionAnalytics {
 
 export class TransactionService {
   static async createTransaction(data: CreateTransactionData): Promise<any> {
-    // Verify category exists and user has access
-    const category = await CategoryModel.findById(data.categoryId);
-    if (!category) {
-      throw new Error('Category not found');
+    // Verify category exists and user has access (skip for transfers)
+    if (data.type !== 'TRANSFER' && data.categoryId) {
+      const category = await CategoryModel.findById(data.categoryId);
+      if (!category) {
+        throw new Error('Category not found');
+      }
+
+      // Check if category belongs to user or is system category
+      if (category.userId && category.userId !== data.userId) {
+        throw new Error('Access denied to category');
+      }
     }
 
-    // Check if category belongs to user or is system category
-    if (category.userId && category.userId !== data.userId) {
-      throw new Error('Access denied to category');
-    }
-
-    // Verify account exists and user has access (if accountId is provided)
-    if (data.accountId) {
-      const account = await AccountModel.findById(data.accountId, data.userId);
-      if (!account) {
-        throw new Error('Account not found');
+    // Handle transfer transactions
+    if (data.type === 'TRANSFER') {
+      if (!data.accountId || !data.toAccountId) {
+        throw new Error('Both from and to accounts are required for transfers');
       }
       
-      // Check if user has sufficient balance for expense transactions
-      if (data.type === 'EXPENSE' && account.balance < data.amount) {
-        throw new Error(`Insufficient funds. Account balance: ${account.balance}, Required: ${data.amount}`);
+      if (data.accountId === data.toAccountId) {
+        throw new Error('Cannot transfer to the same account');
+      }
+
+      // Verify both accounts exist and user has access
+      const fromAccount = await AccountModel.findById(data.accountId, data.userId);
+      const toAccount = await AccountModel.findById(data.toAccountId, data.userId);
+      
+      if (!fromAccount) {
+        throw new Error('From account not found');
+      }
+      if (!toAccount) {
+        throw new Error('To account not found');
+      }
+      
+      // Check if user has sufficient balance for transfer
+      if (fromAccount.balance < data.amount) {
+        throw new Error(`Insufficient funds. Account balance: ${fromAccount.balance}, Required: ${data.amount}`);
+      }
+
+      // Create or find the "Transfer" category for transfers
+      let transferCategory = await CategoryModel.findByName('Transfer', data.userId);
+      if (!transferCategory) {
+        transferCategory = await CategoryModel.create({
+          userId: data.userId,
+          name: 'Transfer',
+          type: 'EXPENSE', // Transfers are neutral, but we'll use EXPENSE as the base type
+          icon: '🔄',
+          color: '#6B7280'
+        });
+      }
+      
+      // Assign the transfer category
+      data.categoryId = transferCategory.id;
+    } else {
+      // Verify account exists and user has access (if accountId is provided)
+      if (data.accountId) {
+        const account = await AccountModel.findById(data.accountId, data.userId);
+        if (!account) {
+          throw new Error('Account not found');
+        }
+        
+        // Check if user has sufficient balance for expense transactions
+        if (data.type === 'EXPENSE' && account.balance < data.amount) {
+          throw new Error(`Insufficient funds. Account balance: ${account.balance}, Required: ${data.amount}`);
+        }
       }
     }
 
     const transaction = await TransactionModel.create(data);
 
-    // Update account balance if account is specified
-    if (data.accountId) {
+    // Update account balance(s)
+    if (data.type === 'TRANSFER') {
+      // For transfers, decrease from account and increase to account
+      await AccountModel.updateBalance(data.accountId!, -data.amount);
+      await AccountModel.updateBalance(data.toAccountId!, data.amount);
+    } else if (data.accountId) {
+      // For regular transactions, update single account
       const amountChange = data.type === 'INCOME' ? data.amount : -data.amount;
       await AccountModel.updateBalance(data.accountId, amountChange);
     }
@@ -182,11 +231,14 @@ export class TransactionService {
     };
 
     const { transactions } = await TransactionModel.findMany(filters, 1, 1000);
+    
+    // Filter out opening balance transactions
+    const regularTransactions = transactions.filter(transaction => !transaction.isOpeningBalance);
 
     // Group by month
     const monthlyData: { [key: string]: { income: number; expenses: number } } = {};
 
-    transactions.forEach(transaction => {
+    regularTransactions.forEach(transaction => {
       const monthKey = transaction.date.toISOString().substring(0, 7); // YYYY-MM
       
       if (!monthlyData[monthKey]) {
@@ -246,7 +298,7 @@ export class TransactionService {
           categoryId: transaction.categoryId,
           date: transaction.date,
           description: transaction.description,
-          paymentMethod: transaction.paymentMethod as any
+          paymentMethodId: transaction.paymentMethod as any
         });
 
         results.success++;
