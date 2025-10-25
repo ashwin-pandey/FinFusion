@@ -326,8 +326,15 @@ const Budgets: React.FC = () => {
             <div className="empty-state">
               <p>No budgets found</p>
               <Button 
-                appearance="primary" 
+                className='action-btn edit-btn'
                 onClick={() => setShowModal(true)}
+                style={{
+                  fontSize: '13px',
+                  height: '36px',
+                  padding: '8px 16px',
+                  fontWeight: '500',
+                  borderRadius: '6px'
+                }}
               >
                 Create your first budget
               </Button>
