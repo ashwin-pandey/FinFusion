@@ -38,11 +38,13 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
   };
 
   const handleNotificationToggle = () => {
-    setShowNotificationPanel(!showNotificationPanel);
-    setShowProfilePanel(false);
-    if (!showNotificationPanel) {
-      fetchNotifications();
-    }
+    // DISABLED: Notification panel temporarily disabled
+    // setShowNotificationPanel(!showNotificationPanel);
+    // setShowProfilePanel(false);
+    // if (!showNotificationPanel) {
+    //   fetchNotifications();
+    // }
+    console.log('Notification panel is temporarily disabled');
   };
 
   const handleNotificationClick = (notificationId: string) => {
@@ -78,7 +80,8 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
         </div>
         
         <div className="topbar-right">
-          <Button
+          {/* DISABLED: Notification button temporarily disabled */}
+          {/* <Button
             className="notification-btn"
             appearance="subtle"
             icon={<Alert24Regular />}
@@ -87,7 +90,7 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
             {unreadCount > 0 && (
               <span className="notification-badge">{unreadCount}</span>
             )}
-          </Button>
+          </Button> */}
           
           <Button
             className="profile-btn"
@@ -145,8 +148,8 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
         </>
       )}
 
-      {/* Notification Panel */}
-      {showNotificationPanel && (
+      {/* Notification Panel - DISABLED FOR NOW */}
+      {/* {showNotificationPanel && (
         <>
           <div className="panel-backdrop" onClick={() => setShowNotificationPanel(false)} />
           <div className="notification-panel show">
@@ -198,7 +201,7 @@ const TopBar: React.FC<TopBarProps> = ({ onMenuClick }) => {
             </div>
           </div>
         </>
-      )}
+      )} */}
     </>
   );
 };
