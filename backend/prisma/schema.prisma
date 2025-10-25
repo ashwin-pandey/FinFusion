@@ -13,6 +13,7 @@ datasource db {
 model User {
   id            String   @id @default(uuid())
   email         String   @unique
+  username      String?  @unique
   googleId      String?  @unique @map("google_id")
   password      String?  @map("password")
   name          String
@@ -27,6 +28,7 @@ model User {
   categories    Category[]
   budgets       Budget[]
   accounts      Account[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -61,11 +63,13 @@ model Transaction {
   type              TransactionType
   categoryId        String            @map("category_id")
   accountId         String?            @map("account_id")
+  toAccountId       String?           @map("to_account_id")
   date              DateTime
   description       String?
-  paymentMethod     PaymentMethod?    @map("payment_method")
+  paymentMethodId   String?           @map("payment_method_id")
   isRecurring       Boolean           @default(false) @map("is_recurring")
   recurringFrequency RecurringFrequency? @map("recurring_frequency")
+  isOpeningBalance  Boolean           @default(false) @map("is_opening_balance")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
 
@@ -73,6 +77,8 @@ model Transaction {
   user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   category          Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   account           Account?          @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  toAccount         Account?          @relation("TransferToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+  paymentMethod     PaymentMethod?    @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
 
   @@map("transactions")
 }
@@ -125,6 +131,7 @@ model Account {
   // Relations
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions  Transaction[]
+  toTransactions Transaction[] @relation("TransferToAccount")
 
   @@map("accounts")
 }
@@ -144,14 +151,23 @@ enum CategoryType {
 enum TransactionType {
   INCOME
   EXPENSE
+  OPENING_BALANCE
+  TRANSFER
 }
 
-enum PaymentMethod {
-  CASH
-  CARD
-  BANK_TRANSFER
-  DIGITAL_WALLET
-  OTHER
+model PaymentMethod {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  transactions Transaction[]
+
+  @@map("payment_methods")
 }
 
 enum RecurringFrequency {
@@ -176,4 +192,27 @@ enum AccountType {
   INVESTMENT
   LOAN
   OTHER
+}
+
+enum NotificationType {
+  SUCCESS
+  ERROR
+  WARNING
+  INFO
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  title       String
+  message     String
+  type        NotificationType
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

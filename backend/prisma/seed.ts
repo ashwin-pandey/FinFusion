@@ -154,6 +154,13 @@ const defaultCategories = [
     icon: '📝',
     color: '#9E9E9E',
     isSystem: true
+  },
+  {
+    name: 'Transfer',
+    type: CategoryType.EXPENSE,
+    icon: '🔄',
+    color: '#6B7280',
+    isSystem: true
   }
 ];
 
@@ -170,6 +177,7 @@ async function main() {
     update: {},
     create: {
       email: 'admin@finfusion.com',
+      username: 'admin',
       name: 'System Administrator',
       password: hashedPassword,
       role: 'ADMIN',
@@ -178,6 +186,7 @@ async function main() {
   });
 
   console.log(`🔑 Admin user created with email: admin@finfusion.com`);
+  console.log(`🔑 Admin username: admin`);
   console.log(`🔑 Admin password: ${adminPassword}`);
 
   // Create default categories
@@ -197,6 +206,28 @@ async function main() {
   }
 
   console.log(`✅ Created ${defaultCategories.length} default categories`);
+
+  // Create default payment methods
+  console.log('💳 Creating default payment methods...');
+  
+  const defaultPaymentMethods = [
+    { code: 'CASH', name: 'Cash', description: 'Physical cash transactions' },
+    { code: 'CARD', name: 'Card', description: 'Credit or debit card payments' },
+    { code: 'BANK_TRANSFER', name: 'Bank Transfer', description: 'Direct bank transfers' },
+    { code: 'DIGITAL_WALLET', name: 'Digital Wallet', description: 'Mobile payment apps like Apple Pay, Google Pay' },
+    { code: 'UPI', name: 'UPI', description: 'Unified Payments Interface' },
+    { code: 'OTHER', name: 'Other', description: 'Other payment methods' }
+  ];
+
+  for (const paymentMethodData of defaultPaymentMethods) {
+    await prisma.paymentMethod.upsert({
+      where: { code: paymentMethodData.code },
+      update: paymentMethodData,
+      create: paymentMethodData
+    });
+  }
+
+  console.log(`✅ Created ${defaultPaymentMethods.length} default payment methods`);
 
   // Create some sample subcategories for Food & Dining
   const foodCategory = await prisma.category.findFirst({
