@@ -23,7 +23,7 @@ export const useAnalytics = (autoFetch: boolean = true) => {
     return dispatch(fetchDashboardOverview({ startDate, endDate })).unwrap();
   };
 
-  const handleFetchTrends = (startDate?: string, endDate?: string, groupBy?: 'day' | 'week' | 'month') => {
+  const handleFetchTrends = (startDate?: string, endDate?: string, groupBy?: 'day' | 'week' | 'month' | 'quarter' | 'year') => {
     return dispatch(fetchSpendingTrends({ startDate, endDate, groupBy })).unwrap();
   };
 
