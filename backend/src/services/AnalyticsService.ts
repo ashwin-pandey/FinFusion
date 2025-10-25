@@ -108,14 +108,14 @@ export class AnalyticsService {
     userId: string,
     startDate?: Date,
     endDate?: Date,
-    groupBy: 'day' | 'week' | 'month' = 'month'
+    groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year' = 'month'
   ): Promise<SpendingTrends> {
     // Default to last 6 months if no dates provided
     const now = new Date();
     const defaultStartDate = startDate || new Date(now.getFullYear(), now.getMonth() - 6, 1);
     const defaultEndDate = endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    const trends = await TransactionService.getSpendingTrends(userId, defaultStartDate, defaultEndDate);
+    const trends = await TransactionService.getSpendingTrends(userId, defaultStartDate, defaultEndDate, groupBy as 'month' | 'quarter' | 'year');
 
     return {
       period: {

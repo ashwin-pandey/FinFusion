@@ -21,7 +21,7 @@ class AnalyticsService {
   async getSpendingTrends(
     startDate?: string,
     endDate?: string,
-    groupBy: 'day' | 'week' | 'month' = 'month'
+    groupBy: 'day' | 'week' | 'month' | 'quarter' | 'year' = 'month'
   ): Promise<SpendingTrend[]> {
     const params: any = { groupBy };
     if (startDate) params.startDate = startDate;

@@ -25,7 +25,7 @@ router.get('/overview', authenticate, [
 router.get('/trends', authenticate, [
   query('startDate').optional().isISO8601().withMessage('Start date must be a valid ISO date'),
   query('endDate').optional().isISO8601().withMessage('End date must be a valid ISO date'),
-  query('groupBy').optional().isIn(['day', 'week', 'month']).withMessage('Group by must be day, week, or month')
+  query('groupBy').optional().isIn(['day', 'week', 'month', 'quarter', 'year']).withMessage('Group by must be day, week, month, quarter, or year')
 ], (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

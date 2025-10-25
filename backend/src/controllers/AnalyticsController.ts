@@ -31,7 +31,10 @@ export class AnalyticsController {
       
       const start = startDate ? new Date(startDate as string) : undefined;
       const end = endDate ? new Date(endDate as string) : undefined;
-      const groupByParam = groupBy as 'day' | 'week' | 'month' || 'month';
+      const validGroupBy = ['day', 'week', 'month', 'quarter', 'year'];
+      const groupByParam = validGroupBy.includes(groupBy as string) 
+        ? (groupBy as 'day' | 'week' | 'month' | 'quarter' | 'year') 
+        : 'month';
 
       const trends = await AnalyticsService.getSpendingTrends(
         req.user!.id,

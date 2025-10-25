@@ -36,7 +36,7 @@ export const fetchDashboardOverview = createAsyncThunk(
 export const fetchSpendingTrends = createAsyncThunk(
   'analytics/fetchTrends',
   async (
-    { startDate, endDate, groupBy }: { startDate?: string; endDate?: string; groupBy?: 'day' | 'week' | 'month' },
+    { startDate, endDate, groupBy }: { startDate?: string; endDate?: string; groupBy?: 'day' | 'week' | 'month' | 'quarter' | 'year' },
     { rejectWithValue }
   ) => {
     try {
