@@ -65,8 +65,14 @@ export class TransactionService {
       }
       
       // Check if user has sufficient balance for transfer
-      if (fromAccount.balance < data.amount) {
+      // Credit cards allow negative balances (debt), other accounts don't
+      if (fromAccount.balance < data.amount && fromAccount.type !== 'CREDIT_CARD') {
         throw new Error(`Insufficient funds. Account balance: ${fromAccount.balance}, Required: ${data.amount}`);
+      }
+      
+      // Prevent transferring money TO credit cards with zero balance (they should only have debt)
+      if (toAccount.type === 'CREDIT_CARD' && toAccount.balance === 0) {
+        throw new Error('Cannot transfer money to a credit card with zero balance. Credit cards should only receive payments when they have debt (negative balance).');
       }
 
       // Create or find the "Transfer" category for transfers
@@ -92,7 +98,8 @@ export class TransactionService {
         }
         
         // Check if user has sufficient balance for expense transactions
-        if (data.type === 'EXPENSE' && account.balance < data.amount) {
+        // Credit cards allow negative balances (debt), other accounts don't
+        if (data.type === 'EXPENSE' && account.balance < data.amount && account.type !== 'CREDIT_CARD') {
           throw new Error(`Insufficient funds. Account balance: ${account.balance}, Required: ${data.amount}`);
         }
       }
