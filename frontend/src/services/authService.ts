@@ -2,12 +2,13 @@ import api from './api';
 import { User, ApiResponse, AuthState } from '../types';
 
 export interface LoginCredentials {
-  email: string;
+  email: string; // Can be email or username
   password: string;
 }
 
 export interface RegisterData {
   email: string;
+  username: string;
   password: string;
   name: string;
 }
@@ -79,7 +80,7 @@ class AuthService {
   }
 
   // Update profile
-  async updateProfile(data: { name: string; email: string }): Promise<User> {
+  async updateProfile(data: { name: string; email: string; username?: string }): Promise<User> {
     const response = await api.put<ApiResponse<User>>('/auth/profile', data);
     if (response.data.success && response.data.data) {
       return response.data.data;

@@ -34,7 +34,7 @@ export const useAuth = () => {
     dispatch(clearError());
   };
 
-  const handleUpdateProfile = async (data: { name: string; email: string }) => {
+  const handleUpdateProfile = async (data: { name: string; email: string; username?: string }) => {
     return dispatch(updateProfile(data)).unwrap();
   };
 

@@ -7,11 +7,13 @@ import './Auth.css';
 const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
+    username?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
@@ -34,6 +36,7 @@ const Register: React.FC = () => {
     const newErrors: {
       name?: string;
       email?: string;
+      username?: string;
       password?: string;
       confirmPassword?: string;
     } = {};
@@ -48,6 +51,14 @@ const Register: React.FC = () => {
       newErrors.email = 'Email is required';
     } else if (!isValidEmail(email)) {
       newErrors.email = 'Invalid email format';
+    }
+
+    if (!username.trim()) {
+      newErrors.username = 'Username is required';
+    } else if (username.trim().length < 3) {
+      newErrors.username = 'Username must be at least 3 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      newErrors.username = 'Username can only contain letters, numbers, and underscores';
     }
 
     if (!password) {
@@ -74,7 +85,7 @@ const Register: React.FC = () => {
     if (!validate()) return;
 
     try {
-      await register({ name, email, password });
+      await register({ name, email, username, password });
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by Redux
@@ -121,6 +132,20 @@ const Register: React.FC = () => {
               disabled={isLoading}
             />
             {errors.email && <span className="field-error">{errors.email}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              className={errors.username ? 'error' : ''}
+              disabled={isLoading}
+            />
+            {errors.username && <span className="field-error">{errors.username}</span>}
           </div>
 
           <div className="form-group">

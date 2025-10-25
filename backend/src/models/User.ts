@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 export interface User {
   id: string;
   email: string;
+  username?: string | null;
   googleId?: string | null;
   password?: string | null;
   name: string;
@@ -18,6 +19,7 @@ export interface User {
 export interface CreateUserData {
   googleId?: string;
   email: string;
+  username?: string;
   name: string;
   password?: string;
   profilePicture?: string;
@@ -27,6 +29,8 @@ export interface CreateUserData {
 
 export interface UpdateUserData {
   name?: string;
+  email?: string;
+  username?: string;
   profilePicture?: string;
   password?: string;
   role?: 'ADMIN' | 'MANAGER' | 'USER';
@@ -39,6 +43,7 @@ export class UserModel {
       data: {
         googleId: data.googleId ?? null,
         email: data.email,
+        username: data.username ?? null,
         name: data.name,
         password: data.password,
         profilePicture: data.profilePicture,
@@ -66,6 +71,23 @@ export class UserModel {
     });
   }
 
+  static async findByUsername(username: string): Promise<User | null> {
+    return await prisma.user.findUnique({
+      where: { username }
+    });
+  }
+
+  static async findByEmailOrUsername(identifier: string): Promise<User | null> {
+    return await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier }
+        ]
+      }
+    });
+  }
+
   static async update(id: string, data: UpdateUserData): Promise<User> {
     return await prisma.user.update({
       where: { id },
@@ -89,5 +111,13 @@ export class UserModel {
 
   static async count(): Promise<number> {
     return await prisma.user.count();
+  }
+
+  static async findAll(): Promise<User[]> {
+    return await prisma.user.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
   }
 }

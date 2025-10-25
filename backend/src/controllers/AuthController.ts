@@ -2,25 +2,26 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { AuthService } from '../services/AuthService';
 import { AccountModel } from '../models/Account';
+import { UserModel } from '../models/User';
 import { logger } from '../utils/logger';
 
 export class AuthController {
   static async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, name } = req.body;
+      const { email, username, password, name } = req.body;
 
       // Validate input
-      if (!email || !password || !name) {
+      if (!email || !username || !password || !name) {
         res.status(400).json({
           success: false,
-          error: 'Email, password, and name are required'
+          error: 'Email, username, password, and name are required'
         });
         return;
       }
 
-      // Check if user already exists
-      const existingUser = await AuthService.getUserByEmail(email);
-      if (existingUser) {
+      // Check if user already exists by email
+      const existingUserByEmail = await AuthService.getUserByEmail(email);
+      if (existingUserByEmail) {
         res.status(400).json({
           success: false,
           error: 'User with this email already exists'
@@ -28,8 +29,18 @@ export class AuthController {
         return;
       }
 
+      // Check if username already exists
+      const existingUserByUsername = await UserModel.findByUsername(username);
+      if (existingUserByUsername) {
+        res.status(400).json({
+          success: false,
+          error: 'Username is already taken'
+        });
+        return;
+      }
+
       // Create user
-      const user = await AuthService.createUser(email, password, name);
+      const user = await AuthService.createUser(email, password, name, username);
       
       // Create default Cash account for the new user
       try {
@@ -58,8 +69,10 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
+            username: user.username,
             name: user.name,
             profilePicture: user.profilePicture,
+            role: user.role,
             createdAt: user.createdAt
           },
           tokens: {
@@ -85,17 +98,17 @@ export class AuthController {
       if (!email || !password) {
         res.status(400).json({
           success: false,
-          error: 'Email and password are required'
+          error: 'Email/Username and password are required'
         });
         return;
       }
 
-      // Verify credentials
+      // Verify credentials (email can be email or username)
       const user = await AuthService.verifyPassword(email, password);
       if (!user) {
         res.status(401).json({
           success: false,
-          error: 'Invalid email or password'
+          error: 'Invalid email/username or password'
         });
         return;
       }
@@ -112,8 +125,10 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
+            username: user.username,
             name: user.name,
             profilePicture: user.profilePicture,
+            role: user.role,
             createdAt: user.createdAt
           },
           tokens: {
@@ -290,6 +305,63 @@ export class AuthController {
       res.status(500).json({
         success: false,
         error: 'Failed to update profile'
+      });
+    }
+  }
+
+  static async getCurrentUser(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const user = await AuthService.getCurrentUser(userId);
+
+      res.json({
+        success: true,
+        data: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          name: user.name,
+          profilePicture: user.profilePicture,
+          role: user.role,
+          createdAt: user.createdAt
+        }
+      });
+    } catch (error: any) {
+      logger.error('Get current user error', error, { userId: req.user?.id });
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get user'
+      });
+    }
+  }
+
+  static async updateProfile(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { name, email, username } = req.body;
+      const userId = req.user!.id;
+
+      const user = await AuthService.updateProfile(userId, { name, email, username });
+
+      logger.auth('User profile updated', userId, { name, email, username });
+      logger.info('Profile update completed', { userId });
+
+      res.json({
+        success: true,
+        data: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          name: user.name,
+          profilePicture: user.profilePicture,
+          role: user.role,
+          createdAt: user.createdAt
+        }
+      });
+    } catch (error: any) {
+      logger.error('Update profile error', error, { userId: req.user?.id });
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to update profile'
       });
     }
   }

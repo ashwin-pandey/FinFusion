@@ -66,7 +66,7 @@ export const logout = createAsyncThunk('auth/logout', async () => {
 
 export const updateProfile = createAsyncThunk(
   'auth/updateProfile',
-  async (data: { name: string; email: string }, { rejectWithValue }) => {
+  async (data: { name: string; email: string; username?: string }, { rejectWithValue }) => {
     try {
       const user = await authService.updateProfile(data);
       return user;

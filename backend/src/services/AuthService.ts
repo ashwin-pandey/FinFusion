@@ -16,11 +16,12 @@ export interface GoogleProfile {
 }
 
 export class AuthService {
-  static async createUser(email: string, password: string, name: string) {
+  static async createUser(email: string, password: string, name: string, username: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const userData: CreateUserData = {
       email,
+      username,
       password: hashedPassword,
       name
     };
@@ -32,8 +33,8 @@ export class AuthService {
     return await UserModel.findByEmail(email);
   }
 
-  static async verifyPassword(email: string, password: string) {
-    const user = await UserModel.findByEmail(email);
+  static async verifyPassword(identifier: string, password: string) {
+    const user = await UserModel.findByEmailOrUsername(identifier);
     if (!user || !user.password) {
       return null;
     }
@@ -133,7 +134,31 @@ export class AuthService {
     }
   }
 
-  static async updateProfile(userId: string, data: { name: string; email: string }) {
+  static async getCurrentUser(userId: string) {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  static async updateProfile(userId: string, data: { name?: string; email?: string; username?: string }) {
+    // Check if email is being changed and if it's already taken
+    if (data.email) {
+      const existingUser = await UserModel.findByEmail(data.email);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Email is already taken');
+      }
+    }
+
+    // Check if username is being changed and if it's already taken
+    if (data.username) {
+      const existingUser = await UserModel.findByUsername(data.username);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Username is already taken');
+      }
+    }
+
     return await UserModel.update(userId, data);
   }
 

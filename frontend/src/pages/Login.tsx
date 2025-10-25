@@ -6,9 +6,9 @@ import GoogleLogin from '../components/GoogleLogin';
 import './Auth.css';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ emailOrUsername?: string; password?: string }>({});
   const { login, loginWithGoogle, isAuthenticated, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
 
@@ -25,12 +25,10 @@ const Login: React.FC = () => {
   }, [clearError]);
 
   const validate = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { emailOrUsername?: string; password?: string } = {};
 
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!isValidEmail(email)) {
-      newErrors.email = 'Invalid email format';
+    if (!emailOrUsername.trim()) {
+      newErrors.emailOrUsername = 'Email or username is required';
     }
 
     if (!password) {
@@ -47,7 +45,7 @@ const Login: React.FC = () => {
     if (!validate()) return;
 
     try {
-      await login({ email, password });
+      await login({ email: emailOrUsername, password });
       navigate('/dashboard');
     } catch (err) {
       // Error is handled by Redux
@@ -80,17 +78,17 @@ const Login: React.FC = () => {
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="emailOrUsername">Email or Username</label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className={errors.email ? 'error' : ''}
+              type="text"
+              id="emailOrUsername"
+              value={emailOrUsername}
+              onChange={(e) => setEmailOrUsername(e.target.value)}
+              placeholder="Enter your email or username"
+              className={errors.emailOrUsername ? 'error' : ''}
               disabled={isLoading}
             />
-            {errors.email && <span className="field-error">{errors.email}</span>}
+            {errors.emailOrUsername && <span className="field-error">{errors.emailOrUsername}</span>}
           </div>
 
           <div className="form-group">

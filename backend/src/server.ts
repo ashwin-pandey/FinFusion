@@ -13,6 +13,9 @@ import budgetRoutes from './routes/budgets';
 import analyticsRoutes from './routes/analytics';
 import adminRoutes from './routes/admin';
 import accountRoutes from './routes/accounts';
+import recurringTransactionRoutes from './routes/recurringTransactions';
+import paymentMethodRoutes from './routes/paymentMethods';
+import notificationRoutes from './routes/notifications';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -113,6 +116,9 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/accounts', accountRoutes);
+app.use('/api/recurring-transactions', recurringTransactionRoutes);
+app.use('/api/payment-methods', paymentMethodRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware
 app.use(notFound);

@@ -11,7 +11,9 @@ const router = express.Router();
 
 // Validation middleware
 const validateRegistration = [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().withMessage('Please provide a valid email address'),
+  body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores'),
   body('password').isLength({ min: 6 }),
   body('name').trim().notEmpty(),
   (req: Request, res: Response, next: NextFunction) => {
@@ -28,8 +30,8 @@ const validateRegistration = [
 ];
 
 const validateLogin = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty(),
+  body('email').notEmpty().withMessage('Email or username is required'),
+  body('password').notEmpty().withMessage('Password is required'),
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -46,6 +48,11 @@ const validateLogin = [
 // Regular authentication routes
 router.post('/register', validateRegistration, AuthController.register);
 router.post('/login', validateLogin, AuthController.login);
+
+// Profile management routes
+router.get('/me', authenticate, AuthController.getCurrentUser);
+router.put('/profile', authenticate, AuthController.updateProfile);
+router.put('/password', authenticate, AuthController.changePassword);
 
 // Google OAuth strategy setup
 passport.use(new (require('passport-google-oauth20').Strategy)({
@@ -92,7 +99,7 @@ router.get('/me', authenticate, AuthController.getCurrentUser);
 // Update profile
 router.put('/profile', authenticate, [
   body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+  body('email').isEmail().withMessage('Valid email is required')
 ], (req: AuthRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
