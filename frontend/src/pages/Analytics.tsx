@@ -9,6 +9,7 @@ import { Text } from '@fluentui/react-components';
 import StatCard from '../components/Cards/StatCard';
 import ClickableNumber from '../components/ClickableNumber';
 import './Analytics.css';
+import './EnhancedAnalytics.css';
 
 const Analytics: React.FC = () => {
   const { dashboard, spendingTrends, incomeBreakdown, expenseBreakdown, isLoading, error, fetchDashboard, fetchTrends, fetchBreakdown } = useAnalytics(false);
@@ -92,16 +93,31 @@ const Analytics: React.FC = () => {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5) : [];
 
-  // Calculate spending by day of week (mock data - would need backend support)
-  const dayOfWeekData = [
-    { day: 'Mon', amount: 0 },
-    { day: 'Tue', amount: 0 },
-    { day: 'Wed', amount: 0 },
-    { day: 'Thu', amount: 0 },
-    { day: 'Fri', amount: 0 },
-    { day: 'Sat', amount: 0 },
-    { day: 'Sun', amount: 0 },
-  ];
+  // Enhanced analytics calculations with proper null checks
+  const savingsRate = summary && summary.totalIncome && summary.totalIncome > 0 
+    ? (summary.netIncome || 0) / summary.totalIncome * 100 
+    : 0;
+  
+  const expenseVelocity = summary && summary.totalExpenses && summary.totalExpenses > 0
+    ? summary.totalExpenses / 30 // Daily spending rate
+    : 0;
+  
+  const budgetHealth = summary && summary.totalIncome && summary.totalIncome > 0
+    ? Math.min(100, ((summary.netIncome || 0) / summary.totalIncome) * 100)
+    : 0;
+  
+  // Spending pattern analysis with null checks
+  const hasHighSpending = topExpenses.length > 0 && topExpenses[0] && topExpenses[0].percentage > 40;
+  const hasDiverseSpending = expenseBreakdown && expenseBreakdown.length > 5;
+  const isOverspending = summary && (summary.netIncome || 0) < 0;
+  
+  // Financial health score (0-100) with safe calculations
+  const healthScore = Math.max(0, Math.min(100, 
+    (savingsRate * 0.4) + 
+    (budgetHealth * 0.3) + 
+    (hasDiverseSpending ? 20 : 0) + 
+    (isOverspending ? -30 : 20)
+  ));
 
   return (
     <div className="analytics-page">
@@ -154,6 +170,27 @@ const Analytics: React.FC = () => {
               : '0%'
           }
           label="Savings Rate"
+        />
+
+        <StatCard
+          icon="💸"
+          iconColor="#fff3e0"
+          value={<ClickableNumber value={expenseVelocity || 0} />}
+          label="Daily Spending Rate"
+        />
+
+        <StatCard
+          icon="🏥"
+          iconColor={healthScore >= 70 ? "#e8f5e9" : healthScore >= 40 ? "#fff3e0" : "#ffebee"}
+          value={`${Math.round(healthScore || 0)}/100`}
+          label="Financial Health Score"
+        />
+
+        <StatCard
+          icon="📊"
+          iconColor="#e3f2fd"
+          value={(expenseBreakdown?.length || 0).toString()}
+          label="Spending Categories"
         />
       </div>
 
@@ -267,37 +304,105 @@ const Analytics: React.FC = () => {
         )}
       </div>
 
-      {/* Insights Section */}
+      {/* Enhanced Insights Section */}
       <div className="insights-section">
-        <h2>💡 Insights</h2>
+        <h2>💡 Smart Insights & Recommendations</h2>
         <div className="insights-grid">
-          {summary && summary.netIncome > 0 && (
-            <div className="insight-card positive">
-              <h4>Great Job! 🎉</h4>
-              <p>You saved {formatCurrency(summary.netIncome)} this period. Keep it up!</p>
-            </div>
-          )}
+          {/* Financial Health Assessment */}
+          <div className={`insight-card ${healthScore >= 70 ? 'positive' : healthScore >= 40 ? 'warning' : 'negative'}`}>
+            <h4>{healthScore >= 70 ? 'Excellent Financial Health! 🎉' : healthScore >= 40 ? 'Good Progress 📈' : 'Needs Attention ⚠️'}</h4>
+            <p>
+              {healthScore >= 70 
+                ? `Your financial health score is ${Math.round(healthScore)}/100. You're doing great!`
+                : healthScore >= 40 
+                ? `Your financial health score is ${Math.round(healthScore)}/100. Keep improving!`
+                : `Your financial health score is ${Math.round(healthScore)}/100. Consider reducing expenses or increasing income.`
+              }
+            </p>
+          </div>
 
-          {summary && summary.netIncome < 0 && (
-            <div className="insight-card negative">
-              <h4>Watch Out! ⚠️</h4>
-              <p>You spent {formatCurrency(Math.abs(summary.netIncome))} more than you earned.</p>
-            </div>
-          )}
-
-          {topExpenses.length > 0 && (
-            <div className="insight-card">
-              <h4>Top Spending Category</h4>
+          {/* Savings Analysis */}
+          {summary && (
+            <div className={`insight-card ${(summary.netIncome || 0) > 0 ? 'positive' : 'negative'}`}>
+              <h4>{(summary.netIncome || 0) > 0 ? 'Savings Success! 💰' : 'Overspending Alert! 🚨'}</h4>
               <p>
-                {topExpenses[0].category.icon} <strong>{topExpenses[0].category.name}</strong> - {formatCurrency(topExpenses[0].amount)} ({formatPercentage(topExpenses[0].percentage)})
+                {(summary.netIncome || 0) > 0 
+                  ? `You saved ${formatCurrency(summary.netIncome || 0)} (${formatPercentage(savingsRate)} of income). Excellent work!`
+                  : `You spent ${formatCurrency(Math.abs(summary.netIncome || 0))} more than you earned. Consider reviewing your budget.`
+                }
               </p>
             </div>
           )}
 
-          {expenseBreakdown.length > 0 && (
+          {/* Spending Pattern Analysis */}
+          {hasHighSpending && topExpenses[0] && (
+            <div className="insight-card warning">
+              <h4>Concentrated Spending ⚠️</h4>
+              <p>
+                {topExpenses[0].category?.icon || '📊'} <strong>{topExpenses[0].category?.name || 'Unknown'}</strong> represents {formatPercentage(topExpenses[0].percentage || 0)} of your spending. 
+                Consider diversifying your expenses.
+              </p>
+            </div>
+          )}
+
+          {/* Spending Diversity */}
+          {hasDiverseSpending && (
+            <div className="insight-card positive">
+              <h4>Diverse Spending Pattern ✅</h4>
+              <p>Great! You're spending across {expenseBreakdown?.length || 0} different categories, showing good financial diversity.</p>
+            </div>
+          )}
+
+          {/* Daily Spending Rate */}
+          {expenseVelocity > 0 && (
             <div className="insight-card">
-              <h4>Category Diversity</h4>
-              <p>You spent across {expenseBreakdown.length} different categories.</p>
+              <h4>Daily Spending Rate 📊</h4>
+              <p>You're spending an average of {formatCurrency(expenseVelocity || 0)} per day. 
+                {(expenseVelocity || 0) > ((summary?.totalIncome || 0) / 30)
+                  ? ' This is above your daily income rate.' 
+                  : ' This is within a healthy range.'
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Top Category Recommendation */}
+          {topExpenses.length > 0 && topExpenses[0] && (
+            <div className="insight-card">
+              <h4>Top Spending Category 📈</h4>
+              <p>
+                {topExpenses[0].category?.icon || '📊'} <strong>{topExpenses[0].category?.name || 'Unknown'}</strong> - {formatCurrency(topExpenses[0].amount || 0)} ({formatPercentage(topExpenses[0].percentage || 0)})
+                {(topExpenses[0].percentage || 0) > 30 && ' - Consider if this spending is necessary.'}
+              </p>
+            </div>
+          )}
+
+          {/* Budget Recommendations */}
+          {summary && (summary.totalIncome || 0) > 0 && (
+            <div className="insight-card">
+              <h4>Budget Recommendations 💡</h4>
+              <p>
+                {(savingsRate || 0) < 10 
+                  ? 'Try to save at least 10% of your income. Consider the 50/30/20 rule: 50% needs, 30% wants, 20% savings.'
+                  : (savingsRate || 0) < 20
+                  ? 'Good savings rate! Consider increasing to 20% for better financial security.'
+                  : 'Excellent savings rate! You\'re on track for financial independence.'
+                }
+              </p>
+            </div>
+          )}
+
+          {/* Transaction Frequency */}
+          {totalTransactions > 0 && (
+            <div className="insight-card">
+              <h4>Transaction Activity 📱</h4>
+              <p>
+                You made {totalTransactions} transactions this period. 
+                {totalTransactions > 50 
+                  ? ' High transaction frequency - consider consolidating smaller purchases.'
+                  : ' Good transaction frequency - not too many, not too few.'
+                }
+              </p>
             </div>
           )}
         </div>
