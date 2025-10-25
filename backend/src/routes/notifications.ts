@@ -46,7 +46,7 @@ router.patch('/:id/read', [
 ], validate, NotificationController.markAsRead);
 
 // Mark all notifications as read
-router.patch('/read-all', NotificationController.markAllAsRead);
+router.patch('/read-all', (req, res, next) => NotificationController.markAllAsRead(req as any, res, next));
 
 // Delete notification
 router.delete('/:id', [
