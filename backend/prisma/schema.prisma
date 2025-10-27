@@ -29,6 +29,7 @@ model User {
   budgets       Budget[]
   accounts      Account[]
   notifications Notification[]
+  loans         Loan[]
 
   @@map("users")
 }
@@ -42,6 +43,7 @@ model Category {
   color            String?
   parentCategoryId String?  @map("parent_category_id")
   isSystem         Boolean  @default(false) @map("is_system")
+  isEssential      Boolean  @default(true) @map("is_essential")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -79,6 +81,7 @@ model Transaction {
   account           Account?          @relation(fields: [accountId], references: [id], onDelete: SetNull)
   toAccount         Account?          @relation("TransferToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
   paymentMethod     PaymentMethod?    @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  loanPayment       LoanPayment?
 
   @@map("transactions")
 }
@@ -132,6 +135,7 @@ model Account {
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions  Transaction[]
   toTransactions Transaction[] @relation("TransferToAccount")
+  loans         Loan[]
 
   @@map("accounts")
 }
@@ -215,4 +219,93 @@ model Notification {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model Loan {
+  id                    String   @id @default(uuid())
+  userId                String   @map("user_id")
+  name                  String
+  type                  LoanType
+  originalPrincipal     Decimal  @map("original_principal")
+  originalInterestRate  Decimal  @map("original_interest_rate")
+  originalTermMonths    Int      @map("original_term_months")
+  originalStartDate     DateTime @map("original_start_date")
+  currentBalance        Decimal  @map("current_balance")
+  currentInterestRate   Decimal? @map("current_interest_rate")
+  remainingTermMonths   Int?     @map("remaining_term_months")
+  accountId             String   @map("account_id")
+  status                LoanStatus @default(ACTIVE)
+  totalPaid             Decimal  @default(0) @map("total_paid")
+  totalInterestPaid     Decimal  @default(0) @map("total_interest_paid")
+  totalPrePayments      Decimal  @default(0) @map("total_pre_payments")
+  totalInterestSavings  Decimal  @default(0) @map("total_interest_savings")
+  lastPaymentDate       DateTime? @map("last_payment_date")
+  nextPaymentDate       DateTime? @map("next_payment_date")
+  isExistingLoan        Boolean  @default(false) @map("is_existing_loan")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account               Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  payments              LoanPayment[]
+
+  @@map("loans")
+}
+
+model LoanPayment {
+  id              String   @id @default(uuid())
+  loanId         String   @map("loan_id")
+  amount         Decimal
+  principalAmount Decimal @map("principal_amount")
+  interestAmount  Decimal @map("interest_amount")
+  paymentDate    DateTime @map("payment_date")
+  transactionId  String?  @unique @map("transaction_id")
+  isPrePayment   Boolean  @default(false) @map("is_pre_payment")
+  prePaymentType PrePaymentType? @map("pre_payment_type")
+  interestSavings Decimal? @map("interest_savings")
+  termReduction Int? @map("term_reduction")
+  isScheduled    Boolean  @default(false) @map("is_scheduled")
+  scheduledDate  DateTime? @map("scheduled_date")
+  status         PaymentStatus @default(COMPLETED) @map("status")
+  defaultReason  String?  @map("default_reason")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  loan           Loan        @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@map("loan_payments")
+}
+
+enum LoanType {
+  PERSONAL
+  HOME
+  CAR
+  EDUCATION
+  BUSINESS
+  CREDIT_CARD
+  OTHER
+}
+
+enum LoanStatus {
+  ACTIVE
+  PAID_OFF
+  DEFAULTED
+  REFINANCED
+  PAUSED
+}
+
+enum PrePaymentType {
+  PARTIAL
+  FULL
+  EMILY_ONLY
+}
+
+enum PaymentStatus {
+  SCHEDULED
+  COMPLETED
+  DEFAULTED
+  CANCELLED
 }

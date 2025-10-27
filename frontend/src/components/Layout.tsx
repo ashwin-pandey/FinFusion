@@ -20,7 +20,8 @@ import {
   ChartMultiple24Regular,
   Folder24Regular,
   BuildingBank24Regular,
-  Person24Regular
+  Person24Regular,
+  BuildingBank24Filled
 } from '@fluentui/react-icons';
 import './Layout.css';
 
@@ -353,6 +354,7 @@ const Layout: React.FC = () => {
     { path: '/transactions', label: 'Transactions', icon: <Payment24Regular /> },
     { path: '/budgets', label: 'Budgets', icon: <Money24Regular /> },
     { path: '/analytics', label: 'Analytics', icon: <ChartMultiple24Regular /> },
+    { path: '/loans', label: 'Loans', icon: <BuildingBank24Filled /> },
     { path: '/categories', label: 'Categories', icon: <Folder24Regular /> },
     { path: '/accounts', label: 'Accounts', icon: <BuildingBank24Regular /> },
     { path: '/profile', label: 'Profile', icon: <Person24Regular /> },

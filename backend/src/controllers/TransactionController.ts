@@ -15,7 +15,8 @@ export class TransactionController {
         endDate,
         search,
         paymentMethod,
-        isRecurring
+        isRecurring,
+        isEssential
       } = req.query;
 
       const filters: any = {};
@@ -27,6 +28,7 @@ export class TransactionController {
       if (search) filters.search = search;
       if (paymentMethod) filters.paymentMethod = paymentMethod;
       if (isRecurring !== undefined) filters.isRecurring = isRecurring === 'true';
+      if (isEssential !== undefined) filters.isEssential = isEssential === 'true';
 
       const result = await TransactionService.getTransactions(
         req.user!.id,

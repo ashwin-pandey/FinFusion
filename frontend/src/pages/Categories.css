@@ -1,5 +1,6 @@
-/* Import shared summary styles */
+/* Import shared styles */
 @import '../styles/summary.css';
+@import '../styles/buttons.css';
 
 /* Categories Page */
 .categories-page {
@@ -27,6 +28,25 @@
 .page-actions {
   display: flex;
   gap: 12px;
+}
+
+/* .page-actions .action-btn {
+  margin-right: 0;
+  min-width: auto;
+  width: auto;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+}
+
+.page-actions .action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .btn {
@@ -63,7 +83,7 @@
 .btn-secondary:hover {
   background: #e9ecef;
   transform: translateY(-1px);
-}
+} */
 
 /* Tabs */
 .tabs {
@@ -247,6 +267,10 @@
   align-items: center;
 }
 
+.category-actions .action-btn {
+  margin-right: 0;
+}
+
 .category-actions .edit-btn {
   background: #e3f2fd;
   color: #1976d2;
@@ -381,46 +405,7 @@
   transform: translateY(-1px);
 }
 
-.action-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: none;
-}
-
-.edit-btn {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.edit-btn:hover {
-  background: #bbdefb;
-  transform: translateY(-1px);
-}
-
-.delete-btn {
-  background: #ffebee;
-  color: #d32f2f;
-}
-
-.delete-btn:hover {
-  background: #ffcdd2;
-  transform: translateY(-1px);
-}
-
-.danger-btn {
-  background: #ffebee;
-  color: #d32f2f;
-}
-
-.danger-btn:hover {
-  background: #ffcdd2;
-  transform: translateY(-1px);
-}
+/* Button styles are now imported from common styles */
 
 .category-color {
   width: 100%;

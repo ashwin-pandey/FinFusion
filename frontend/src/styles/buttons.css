@@ -1,0 +1,48 @@
+/* Common Button Styles - Used throughout the application */
+
+/* Action Button Base */
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  height: 32px;
+  white-space: nowrap;
+  width: fit-content;
+  min-width: auto;
+  flex-shrink: 0;
+}
+
+.action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Edit Button */
+.edit-btn {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.edit-btn:hover {
+  background: #bbdefb;
+  transform: translateY(-1px);
+}
+
+/* Danger Button */
+.danger-btn {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.danger-btn:hover {
+  background: #ffcdd2;
+  transform: translateY(-1px);
+}

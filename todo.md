@@ -19,6 +19,15 @@
 - Investment performance analytics and reporting
 - Support for multiple investment platforms and brokers
 
+### 4. Loan Tracking & Management System
+- Create and manage loans with detailed information (principal, interest rate, term, etc.)
+- Link loans to specific accounts for automatic deduction tracking
+- Schedule loan payments with automatic transaction creation
+- Track loan progress with remaining balance, paid amount, and payoff timeline
+- Visual loan progress charts and analytics
+- Support for different loan types (personal, home, car, etc.)
+- Loan payment history and interest tracking
+
 ---
 
 *This file contains future enhancement ideas for the FinFusion application.*

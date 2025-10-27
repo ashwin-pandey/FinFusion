@@ -25,6 +25,8 @@ export interface TransactionAnalytics {
     income: number;
     expenses: number;
     netIncome: number;
+    essentialExpenses?: number;
+    nonEssentialExpenses?: number;
   }>;
 }
 
@@ -232,7 +234,7 @@ export class TransactionService {
     startDate?: Date,
     endDate?: Date,
     groupBy: 'month' | 'quarter' | 'year' = 'month'
-  ): Promise<Array<{ period: string; income: number; expenses: number; netIncome: number }>> {
+  ): Promise<Array<{ period: string; income: number; expenses: number; netIncome: number; essentialExpenses: number; nonEssentialExpenses: number }>> {
     // Default to last 6 months if no dates provided
     const defaultStartDate = startDate || new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
     const defaultEndDate = endDate || new Date();
@@ -264,7 +266,7 @@ export class TransactionService {
     const regularTransactions = transactions;
 
     // Group by selected period
-    const groupedData: { [key: string]: { income: number; expenses: number } } = {};
+    const groupedData: { [key: string]: { income: number; expenses: number; essentialExpenses: number; nonEssentialExpenses: number } } = {};
 
     regularTransactions.forEach(transaction => {
       let periodKey: string;
@@ -286,7 +288,7 @@ export class TransactionService {
       }
       
       if (!groupedData[periodKey]) {
-        groupedData[periodKey] = { income: 0, expenses: 0 };
+        groupedData[periodKey] = { income: 0, expenses: 0, essentialExpenses: 0, nonEssentialExpenses: 0 };
       }
 
       // Convert Decimal to number properly
@@ -297,7 +299,21 @@ export class TransactionService {
         console.log(`Added ${transaction.isOpeningBalance ? 'OPENING_BALANCE' : 'INCOME'}: ${amount} to ${periodKey}`);
       } else if (transaction.type === 'EXPENSE') {
         groupedData[periodKey].expenses += amount;
-        console.log(`Added EXPENSE: ${amount} to ${periodKey}`);
+        // Check if category is essential
+        const category = (transaction as any).category;
+        if (category) {
+          const isEssential = category.isEssential ?? false;
+          if (isEssential) {
+            groupedData[periodKey].essentialExpenses += amount;
+          } else {
+            groupedData[periodKey].nonEssentialExpenses += amount;
+          }
+          console.log(`Added EXPENSE: ${amount} (${isEssential ? 'essential' : 'non-essential'}) to ${periodKey}`);
+        } else {
+          // If no category, assume non-essential
+          groupedData[periodKey].nonEssentialExpenses += amount;
+          console.log(`Added EXPENSE: ${amount} (no category, treating as non-essential) to ${periodKey}`);
+        }
       } else if (transaction.type === 'OPENING_BALANCE') {
         groupedData[periodKey].income += amount;
         console.log(`Added OPENING_BALANCE: ${amount} to ${periodKey}`);
@@ -312,7 +328,9 @@ export class TransactionService {
         period,
         income: Number(Number(data.income || 0).toFixed(2)),
         expenses: Number(Number(data.expenses || 0).toFixed(2)),
-        netIncome: Number((Number(data.income || 0) - Number(data.expenses || 0)).toFixed(2))
+        netIncome: Number((Number(data.income || 0) - Number(data.expenses || 0)).toFixed(2)),
+        essentialExpenses: Number(Number(data.essentialExpenses || 0).toFixed(2)),
+        nonEssentialExpenses: Number(Number(data.nonEssentialExpenses || 0).toFixed(2))
       }))
       .sort((a, b) => a.period.localeCompare(b.period));
     

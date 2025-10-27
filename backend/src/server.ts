@@ -16,6 +16,7 @@ import accountRoutes from './routes/accounts';
 import recurringTransactionRoutes from './routes/recurringTransactions';
 import paymentMethodRoutes from './routes/paymentMethods';
 import notificationRoutes from './routes/notifications';
+import loanRoutes from './routes/loans';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -119,6 +120,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/recurring-transactions', recurringTransactionRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/loans', loanRoutes);
 
 // Error handling middleware
 app.use(notFound);

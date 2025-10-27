@@ -149,12 +149,14 @@ const Categories: React.FC = () => {
     <div className="categories-page">
       <div className="page-header">
         <h1>Categories</h1>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowModal(true)}
-        >
-          <Add24Regular /> Add Category
-        </button>
+        <div className="page-actions">
+          <button 
+            className="action-btn edit-btn"
+            onClick={() => setShowModal(true)}
+          >
+            <Add24Regular /> Add Category
+          </button>
+        </div>
       </div>
 
       {/* Category Summary */}

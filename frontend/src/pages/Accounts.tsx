@@ -32,7 +32,8 @@ import {
   MoneyHand24Regular,
   ChartMultiple24Regular,
   Home24Regular,
-  Document24Regular
+  Document24Regular,
+  Dismiss24Regular
 } from '@fluentui/react-icons';
 import './Accounts.css';
 
@@ -301,7 +302,21 @@ const Accounts: React.FC = () => {
       }}>
         <DialogSurface>
           <DialogBody>
-            <DialogTitle>{editingAccount ? 'Edit Account' : 'Add New Account'}</DialogTitle>
+            <DialogTitle>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{editingAccount ? 'Edit Account' : 'Add New Account'}</span>
+                <Button 
+                  appearance="subtle" 
+                  icon={<Dismiss24Regular />} 
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingAccount(null);
+                    resetForm();
+                  }}
+                  style={{ minWidth: 'auto', padding: '4px' }}
+                />
+              </div>
+            </DialogTitle>
             <DialogContent>
               <form onSubmit={handleSubmit}>
                 <Field label="Account Name" required>
@@ -370,9 +385,9 @@ const Accounts: React.FC = () => {
             </DialogContent>
             <DialogActions>
               <DialogTrigger disableButtonEnhancement>
-                <Button appearance="secondary">Cancel</Button>
+                <Button className="action-btn danger-btn">Cancel</Button>
               </DialogTrigger>
-              <Button appearance="primary" onClick={handleSubmit}>
+              <Button className="action-btn edit-btn" onClick={handleSubmit}>
                 {editingAccount ? 'Update Account' : 'Create Account'}
               </Button>
             </DialogActions>

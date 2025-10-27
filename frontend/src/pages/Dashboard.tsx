@@ -17,6 +17,15 @@ import {
   tokens,
   shorthands
 } from '@fluentui/react-components';
+import {
+  BuildingBank24Regular,
+  Money24Regular,
+  MoneyHand24Regular,
+  ChartMultiple24Regular,
+  Target24Regular,
+  DataTrending24Regular,
+  CheckmarkCircle24Regular
+} from '@fluentui/react-icons';
 import './Dashboard.css';
 
 const useStyles = makeStyles({
@@ -259,9 +268,9 @@ const Dashboard: React.FC = () => {
               className="fluent-select"
               style={{ minWidth: '150px' }}
             >
-              <option value="month">📅 Monthly</option>
-              <option value="quarter">📊 Quarterly</option>
-              <option value="year">📈 Yearly</option>
+              <option value="month">Monthly</option>
+              <option value="quarter">Quarterly</option>
+              <option value="year">Yearly</option>
             </select>
           </div>
         </div>
@@ -270,7 +279,7 @@ const Dashboard: React.FC = () => {
       {/* Summary Cards */}
       <div className="stats-grid">
         <StatCard
-          icon="🏦"
+          icon={<BuildingBank24Regular />}
           iconColor="#e3f2fd"
           value={<ClickableNumber value={accountSummary?.totalBalance || 0} />}
           label="Total Balance"
@@ -278,7 +287,7 @@ const Dashboard: React.FC = () => {
         />
         
         <StatCard
-          icon="💰"
+          icon={<Money24Regular />}
           iconColor="#e8f5e9"
           value={<ClickableNumber value={summary?.totalIncome || 0} />}
           label="Total Income"
@@ -286,7 +295,7 @@ const Dashboard: React.FC = () => {
         />
         
         <StatCard
-          icon="💸"
+          icon={<MoneyHand24Regular />}
           iconColor="#ffebee"
           value={<ClickableNumber value={summary?.totalExpenses || 0} />}
           label="Total Expenses"
@@ -294,7 +303,7 @@ const Dashboard: React.FC = () => {
         />
         
         <StatCard
-          icon="📊"
+          icon={<ChartMultiple24Regular />}
           iconColor={netIncomeColor === '#4CAF50' ? '#e8f5e9' : '#ffebee'}
           value={<ClickableNumber value={summary?.netIncome || 0} />}
           label="Net Income"
@@ -303,7 +312,7 @@ const Dashboard: React.FC = () => {
         />
         
         <StatCard
-          icon="🎯"
+          icon={<Target24Regular />}
           iconColor="#e3f2fd"
           value={budgets.length}
           label="Active Budgets"
@@ -316,7 +325,7 @@ const Dashboard: React.FC = () => {
         {/* Spending Trends */}
         {trendsData.length > 0 && (
           <div className="chart-card full-width">
-            <h3>💰 {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Income vs Expenses</h3>
+            <h3><Money24Regular /> {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Income vs Expenses</h3>
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
               Compare your {chartGrouping === 'month' ? 'monthly' : chartGrouping === 'quarter' ? 'quarterly' : 'yearly'} income (green) with expenses (red) to track spending patterns
               {(() => {
@@ -394,8 +403,8 @@ const Dashboard: React.FC = () => {
                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
                   />
                   <Legend />
-                  <Bar dataKey="income" fill="#4CAF50" name="💰 Income" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" fill="#F44336" name="💸 Expenses" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="income" fill="#4CAF50" name="Income" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="#F44336" name="Expenses" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -407,7 +416,7 @@ const Dashboard: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
           {/* Monthly Net Income Trend */}
           <div className="chart-card">
-            <h3>📈 {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Savings (Net Income)</h3>
+            <h3><DataTrending24Regular /> {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Savings (Net Income)</h3>
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
               Shows how much you saved each {chartGrouping === 'month' ? 'month' : chartGrouping === 'quarter' ? 'quarter' : 'year'} (positive = savings, negative = overspending)
               {(() => {
@@ -488,7 +497,7 @@ const Dashboard: React.FC = () => {
                     <Bar 
                       dataKey="netIncome" 
                       fill="#2196F3" 
-                      name="💰 Net Income (Savings)" 
+                      name="Net Income (Savings)" 
                       radius={[4, 4, 0, 0]}
                     />
                     <Line 
@@ -498,7 +507,7 @@ const Dashboard: React.FC = () => {
                       strokeWidth={3}
                       dot={{ fill: '#FF6B35', strokeWidth: 2, r: 4 }}
                       activeDot={{ r: 6, stroke: '#FF6B35', strokeWidth: 2 }}
-                      name="📈 Savings Trend"
+                      name="Savings Trend"
                     />
                   </ComposedChart>
                 </ResponsiveContainer>
@@ -506,7 +515,7 @@ const Dashboard: React.FC = () => {
             ) : (
               <div style={{ width: '100%', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}><DataTrending24Regular /></div>
                   <p style={{ fontSize: '16px', marginBottom: '8px' }}>No savings data available</p>
                   <p style={{ fontSize: '14px' }}>Add some transactions to see your monthly savings trends</p>
                 </div>
@@ -516,7 +525,7 @@ const Dashboard: React.FC = () => {
 
           {/* Monthly Savings Rate */}
           <div className="chart-card">
-            <h3>💯 {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Savings Rate (%)</h3>
+            <h3><CheckmarkCircle24Regular /> {chartGrouping === 'month' ? 'Monthly' : chartGrouping === 'quarter' ? 'Quarterly' : 'Yearly'} Savings Rate (%)</h3>
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
               Percentage of income you saved each {chartGrouping === 'month' ? 'month' : chartGrouping === 'quarter' ? 'quarter' : 'year'} (higher is better!)
               {(() => {
@@ -575,7 +584,7 @@ const Dashboard: React.FC = () => {
                     <Bar 
                       dataKey="savingsRate" 
                       fill="#4CAF50" 
-                      name="💯 Savings Rate (%)" 
+                      name="Savings Rate (%)" 
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -584,7 +593,7 @@ const Dashboard: React.FC = () => {
             ) : (
               <div style={{ width: '100%', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>💯</div>
+                  <div style={{ fontSize: '48px', marginBottom: '16px' }}><CheckmarkCircle24Regular /></div>
                   <p style={{ fontSize: '16px', marginBottom: '8px' }}>No savings rate data available</p>
                   <p style={{ fontSize: '14px' }}>Add some transactions to see your savings rate trends</p>
                 </div>
@@ -592,6 +601,83 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Essential vs Non-Essential Expenses Chart - Full Width */}
+        {trendsData.length > 0 && (
+          <div className="chart-card">
+            <h3><ChartMultiple24Regular /> Essential vs Non-Essential Expenses</h3>
+            <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+              Breakdown of your expenses showing what's essential vs discretionary spending
+              {(() => {
+                const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+                const selectedPeriodLength = period === 'all_time' ? Infinity : 
+                  new Date(getDateRangeForPeriod(period).endDate).getTime() - new Date(getDateRangeForPeriod(period).startDate).getTime();
+                
+                if (selectedPeriodLength < oneYearInMs && period !== 'all_time') {
+                  return <span style={{ color: '#2196F3', fontWeight: 'bold' }}> • Current year data</span>;
+                }
+                return '';
+              })()}
+            </p>
+            <div style={{ width: '100%', height: '350px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={trendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="period" 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      if (value.includes('-Q')) {
+                        const [year, quarter] = value.split('-Q');
+                        return `Q${quarter} ${year}`;
+                      } else if (value.match(/^\d{4}$/)) {
+                        return value;
+                      } else if (value.match(/^\d{4}-\d{2}$/)) {
+                        const date = new Date(value + '-01');
+                        return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                      }
+                      return value;
+                    }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1000000) {
+                        return `₹${(value / 1000000).toFixed(1)}M`;
+                      } else if (absValue >= 100000) {
+                        return `₹${(value / 100000).toFixed(1)}L`;
+                      } else if (absValue >= 1000) {
+                        return `₹${(value / 1000).toFixed(1)}K`;
+                      }
+                      return `₹${value.toFixed(0)}`;
+                    }}
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                    labelFormatter={(label) => {
+                      if (label.includes('-Q')) {
+                        const [year, quarter] = label.split('-Q');
+                        return `Q${quarter} ${year}`;
+                      } else if (label.match(/^\d{4}$/)) {
+                        return label;
+                      } else if (label.match(/^\d{4}-\d{2}$/)) {
+                        const date = new Date(label + '-01');
+                        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                      }
+                      return label;
+                    }}
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="essentialExpenses" fill="#4CAF50" name="Essential" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="nonEssentialExpenses" fill="#FF9800" name="Non-Essential" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="#F44336" name="Total Expenses" radius={[4, 4, 0, 0]} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* Charts Row */}
         <div className="charts-row">

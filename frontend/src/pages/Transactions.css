@@ -1,5 +1,6 @@
-/* Import shared summary styles */
+/* Import shared styles */
 @import '../styles/summary.css';
+@import '../styles/buttons.css';
 
 /* Transactions Page */
 .transactions-page {
@@ -115,6 +116,10 @@
   flex-wrap: wrap;
 }
 
+.filters-section .action-btn {
+  margin-right: 0;
+}
+
 .filter-group {
   flex: 1;
   min-width: 200px;
@@ -211,25 +216,33 @@
   gap: 8px;
 }
 
-.action-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 8px;
-  height: 32px;
-  white-space: nowrap;
+.transaction-actions .action-btn {
+  margin-right: 0;
 }
 
-.action-btn svg {
-  width: 14px;
-  height: 14px;
+/* Page Actions */
+.page-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.page-actions .action-btn {
+  margin-right: 0;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  align-items: center;
+}
+
+.form-actions .action-btn {
+  margin-right: 0;
 }
 
 /* Specific styling for the empty state button */
@@ -252,16 +265,6 @@
 .empty-state .action-btn svg {
   width: 16px;
   height: 16px;
-}
-
-.edit-btn {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.edit-btn:hover {
-  background: #bbdefb;
-  transform: translateY(-1px);
 }
 
 .delete-btn {
@@ -313,9 +316,10 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+}
+
+.pagination .action-btn {
+  margin-right: 0;
 }
 
 .pagination button {

@@ -16,6 +16,7 @@ import RecurringTransactions from './pages/RecurringTransactions';
 import Categories from './pages/Categories';
 import Budgets from './pages/Budgets';
 import Analytics from './pages/Analytics';
+import Loans from './pages/Loans';
 import Profile from './pages/Profile';
 import Accounts from './pages/Accounts';
 import Admin from './pages/Admin';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
               <Route path="/categories" element={<Categories />} />
               <Route path="/budgets" element={<Budgets />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/loans" element={<Loans />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />

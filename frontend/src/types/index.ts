@@ -30,6 +30,7 @@ export interface Category {
   color?: string;
   parentCategoryId?: string;
   isSystem: boolean;
+  isEssential: boolean;
   createdAt: string;
   updatedAt: string;
   parentCategory?: Category;
@@ -97,6 +98,7 @@ export interface TransactionFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  isEssential?: boolean;
 }
 
 // Notification Types
@@ -217,6 +219,110 @@ export interface PaginatedResponse<T> {
     total: number;
     pages: number;
   };
+}
+
+// Loan Types
+export type LoanType = 'PERSONAL' | 'HOME' | 'CAR' | 'EDUCATION' | 'BUSINESS' | 'CREDIT_CARD' | 'OTHER';
+export type LoanStatus = 'ACTIVE' | 'PAID_OFF' | 'DEFAULTED' | 'REFINANCED' | 'PAUSED';
+
+export interface Loan {
+  id: string;
+  userId: string;
+  name: string;
+  type: LoanType;
+  originalPrincipal: number;
+  originalInterestRate: number;
+  originalTermMonths: number;
+  originalStartDate: string;
+  currentBalance: number;
+  currentInterestRate?: number;
+  remainingTermMonths?: number;
+  accountId: string;
+  status: LoanStatus;
+  totalPaid: number;
+  totalInterestPaid: number;
+  totalPrePayments?: number;
+  totalInterestSavings?: number;
+  lastPaymentDate?: string;
+  nextPaymentDate?: string;
+  isExistingLoan: boolean;
+  createdAt: string;
+  updatedAt: string;
+  account: {
+    id: string;
+    name: string;
+    type: string;
+    balance: number;
+    currency: string;
+  };
+  payments?: LoanPayment[];
+  paymentSummary?: {
+    totalPayments: number;
+    totalAmount: number;
+    totalPrincipal: number;
+    totalInterest: number;
+    lastPaymentDate: string | null;
+  };
+}
+
+export interface LoanPayment {
+  id: string;
+  loanId: string;
+  amount: number;
+  principalAmount: number;
+  interestAmount: number;
+  paymentDate: string;
+  transactionId?: string;
+  isPrePayment?: boolean;
+  prePaymentType?: string;
+  interestSavings?: number;
+  termReduction?: number;
+  createdAt: string;
+  loan?: {
+    id: string;
+    name: string;
+    type: LoanType;
+  };
+  transaction?: {
+    id: string;
+    amount: number;
+    date: string;
+    description?: string;
+  };
+}
+
+export interface LoanSummary {
+  totalLoans: number;
+  activeLoans: number;
+  totalOutstanding: number;
+  totalPaid: number;
+  monthlyPayments: number;
+}
+
+export interface LoanProgress {
+  loan: Loan;
+  progress: {
+    percentage: number;
+    paidAmount: number;
+    remainingAmount: number;
+    totalPaid: number;
+    totalInterestPaid: number;
+  };
+  paymentSummary: {
+    totalPayments: number;
+    totalAmount: number;
+    totalPrincipal: number;
+    totalInterest: number;
+    lastPaymentDate: string | null;
+  };
+}
+
+export interface PrePaymentAnalytics {
+  totalPrePayments: number;
+  totalInterestSavings: number;
+  prePaymentCount: number;
+  recentPrePayments: LoanPayment[];
+  averagePrePayment: number;
 }
 
 

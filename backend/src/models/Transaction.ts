@@ -71,6 +71,7 @@ export interface TransactionFilters {
   search?: string;
   paymentMethodId?: string;
   isRecurring?: boolean;
+  isEssential?: boolean;
 }
 
 export interface TransactionSummary {
@@ -186,19 +187,18 @@ export class TransactionModel {
       ];
     }
 
+    // Add essential filter if provided
+    if (filters.isEssential !== undefined) {
+      where.category = {
+        isEssential: filters.isEssential
+      };
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         where,
         include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              icon: true,
-              color: true
-            }
-          },
+          category: true,
           account: {
             select: {
               id: true,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useCategories } from '../hooks/useCategories';
 import { useAccounts } from '../hooks/useAccounts';
@@ -11,7 +11,7 @@ import { formatDate, formatPaymentMethod } from '../utils/formatters';
 import { Transaction } from '../types';
 import { exportToCSV } from '../utils/exportHelpers';
 import transactionService from '../services/transactionService';
-import { Button, Input, Select, Option, Text, makeStyles, tokens } from '@fluentui/react-components';
+import { Button, Input, Select, Option, Text } from '@fluentui/react-components';
 import { 
   ArrowClockwise24Regular, 
   ArrowDownload24Regular, 
@@ -24,35 +24,7 @@ import {
 } from '@fluentui/react-icons';
 import './Transactions.css';
 
-const useStyles = makeStyles({
-  pageActions: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalM,
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  actionButtons: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalS,
-  },
-  pagination: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: tokens.spacingHorizontalM,
-    justifyContent: 'center',
-    marginTop: tokens.spacingVerticalL,
-  },
-  formActions: {
-    display: 'flex',
-    gap: tokens.spacingHorizontalM,
-    justifyContent: 'flex-end',
-    marginTop: tokens.spacingVerticalL,
-    alignItems: 'center',
-  },
-});
-
 const Transactions: React.FC = () => {
-  const styles = useStyles();
   const { transactions, pagination, filters, isLoading, fetchTransactions, createTransaction, updateTransaction, deleteTransaction, setFilters } = useTransactions(false);
   const { categories, fetchCategories, error: categoriesError } = useCategories(undefined, false);
   const { accounts, fetchAccounts, error: accountsError } = useAccounts(false);
@@ -93,8 +65,13 @@ const Transactions: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters({ ...filters, [key]: value, page: 1 });
+  const handleFilterChange = async (key: string, value: any) => {
+    // Convert empty strings to undefined to properly clear filters
+    const filterValue = value === '' || value === null ? undefined : value;
+    const newFilters = { ...filters, [key]: filterValue, page: 1 };
+    setFilters(newFilters);
+    // Manually trigger fetch since autoFetch is false
+    await fetchTransactions(newFilters);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,7 +142,8 @@ const Transactions: React.FC = () => {
       }
       resetForm();
       showSuccess('Transaction Saved', editingTransaction ? 'Transaction updated successfully!' : 'Transaction created successfully!');
-      // Don't call fetchTransactions() - the Redux action already updates the state
+      // Re-fetch with current filters to ensure only filtered transactions are shown
+      await fetchTransactions(filters);
     } catch (error: any) {
       console.error('Failed to save transaction:', error);
       console.error('Error response:', error.response);
@@ -313,12 +291,23 @@ const Transactions: React.FC = () => {
 
   const filteredCategories = categories.filter((c) => c.type === formData.type);
   
+  // Filter categories for the filter dropdown based on essential/non-essential
+  const filterDropdownCategories = useMemo(() => {
+    if (filters.isEssential === undefined) {
+      return categories;
+    }
+    // Filter by isEssential flag
+    return categories.filter(cat => {
+      const isEssentialValue = cat.isEssential ?? true;
+      return filters.isEssential === isEssentialValue;
+    });
+  }, [categories, filters.isEssential]);
 
   return (
     <div className="transactions-page">
       <div className="page-header">
         <h1>Transactions</h1>
-        <div className={styles.pageActions}>
+        <div className="page-actions">
           <button className="action-btn edit-btn" onClick={handleRefreshData}>
             <ArrowClockwise24Regular /> Refresh Data
           </button>
@@ -410,7 +399,7 @@ const Transactions: React.FC = () => {
             className="fluent-select"
           >
             <option value="">All Categories</option>
-            {categories.map((cat) => (
+            {filterDropdownCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.icon} {cat.name}
               </option>
@@ -427,6 +416,39 @@ const Transactions: React.FC = () => {
             onChange={(e) => handleFilterChange('search', e.target.value || undefined)}
             className="fluent-input"
           />
+        </div>
+
+        <div className="filter-group">
+          <label><Text weight="semibold">Start Date</Text></label>
+          <input
+            type="date"
+            value={filters.startDate || ''}
+            onChange={(e) => handleFilterChange('startDate', e.target.value || undefined)}
+            className="fluent-input"
+          />
+        </div>
+
+        <div className="filter-group">
+          <label><Text weight="semibold">End Date</Text></label>
+          <input
+            type="date"
+            value={filters.endDate || ''}
+            onChange={(e) => handleFilterChange('endDate', e.target.value || undefined)}
+            className="fluent-input"
+          />
+        </div>
+
+        <div className="filter-group">
+          <label><Text weight="semibold">Essential/Non-Essential</Text></label>
+          <select
+            value={filters.isEssential === undefined ? '' : filters.isEssential ? 'true' : 'false'}
+            onChange={(e) => handleFilterChange('isEssential', e.target.value === '' ? undefined : e.target.value === 'true')}
+            className="fluent-select"
+          >
+            <option value="">All</option>
+            <option value="true">Essential Only</option>
+            <option value="false">Non-Essential Only</option>
+          </select>
         </div>
       </div>
 
@@ -502,7 +524,7 @@ const Transactions: React.FC = () => {
                   <td>{transaction.paymentMethod?.name || 'N/A'}</td>
                   <td>{formatDate(transaction.createdAt, 'short')}</td>
                   <td>
-                    <div className={styles.actionButtons}>
+                    <div className="transaction-actions">
                       <button className="action-btn edit-btn" onClick={() => handleEdit(transaction)}>
                         <Edit24Regular /> Edit
                       </button>
@@ -519,7 +541,7 @@ const Transactions: React.FC = () => {
 
         {/* Pagination */}
         {pagination.pages > 1 && (
-          <div className={styles.pagination}>
+          <div className="pagination">
             <button 
               className="action-btn edit-btn"
               disabled={pagination.page === 1}
@@ -725,7 +747,7 @@ const Transactions: React.FC = () => {
                 />
               </div>
 
-              <div className={styles.formActions}>
+              <div className="form-actions">
                 <button className="action-btn danger-btn" type="button" onClick={resetForm}>
                   Cancel
                 </button>

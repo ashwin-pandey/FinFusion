@@ -1,5 +1,6 @@
-/* Import shared summary styles */
+/* Import shared styles */
 @import '../styles/summary.css';
+@import '../styles/buttons.css';
 
 .accounts-page {
   max-width: 1400px;
@@ -147,40 +148,6 @@
   border-color: #323130;
 }
 
-/* Action Button Styling */
-.action-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 8px;
-  height: 32px;
-  white-space: nowrap;
-  width: fit-content;
-  min-width: auto;
-  flex-shrink: 0;
-}
-
-.action-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.edit-btn {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.edit-btn:hover {
-  background: #bbdefb;
-  transform: translateY(-1px);
-}
 
 .page-header {
   display: flex;
